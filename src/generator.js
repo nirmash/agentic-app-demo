@@ -42,7 +42,8 @@ Rules:
 - Generate meaningful "handler" JavaScript code for each event based on the description.
 - Use snake_case for all "name" fields
 - Always include a submit button at the end unless the user says otherwise
-- The submit button's click handler should be: "document.getElementById('main-form').requestSubmit()"
+- IMPORTANT: The form element always has id="main-form". Any handler that submits the form MUST use: document.getElementById('main-form').requestSubmit()
+- NEVER reference any other form ID in handlers. The only form ID is "main-form".
 - For tables, generate "Add Row" button event handlers that clone table rows
 - Be creative but practical with the form design`;
 
@@ -87,7 +88,77 @@ export async function generateFormSpec(userPrompt) {
   const cleaned = content.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim();
 
   try {
-    return JSON.parse(cleaned);
+    const spec = JSON.parse(cleaned);
+    sanitizeHandlers(spec);
+    return spec;
+  } catch (e) {
+    throw new Error(`Failed to parse LLM response as JSON: ${e.message}\n\nRaw:\n${cleaned}`);
+  }
+}
+
+// Fix any event handlers that reference wrong form IDs
+function sanitizeHandlers(spec) {
+  for (const section of spec.sections || []) {
+    for (const field of section.fields || []) {
+      if (!field.events) continue;
+      for (const evt of field.events) {
+        if (evt.handler) {
+          evt.handler = evt.handler.replace(
+            /document\.getElementById\(['"][^'"]+['"]\)\.requestSubmit\(\)/g,
+            "document.getElementById('main-form').requestSubmit()"
+          );
+        }
+      }
+    }
+  }
+}
+
+const EDIT_SYSTEM_PROMPT = `You are a form design assistant. You are given an existing form specification as JSON and a user's requested change.
+
+Apply the requested change and return the COMPLETE updated JSON specification.
+
+Return ONLY valid JSON (no markdown fences, no explanation). Keep the same schema structure. Preserve all existing fields and settings that are not affected by the change. The form element always has id="main-form" — any handler that submits the form MUST use: document.getElementById('main-form').requestSubmit()`;
+
+export async function editFormSpec(currentSpec, changeRequest) {
+  const token = getToken();
+  if (!token) {
+    throw new Error('Not authenticated. Run: adcgen login');
+  }
+
+  const fetch = (await import('node-fetch')).default;
+
+  const res = await fetch(MODELS_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      messages: [
+        { role: 'system', content: EDIT_SYSTEM_PROMPT },
+        { role: 'user', content: `Current form spec:\n${JSON.stringify(currentSpec, null, 2)}\n\nRequested change:\n${changeRequest}` }
+      ],
+      temperature: 0.7,
+      max_tokens: 4000
+    })
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`LLM API error (${res.status}): ${err}`);
+  }
+
+  const data = await res.json();
+  const content = data.choices?.[0]?.message?.content;
+  if (!content) throw new Error('No response from LLM');
+
+  const cleaned = content.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim();
+
+  try {
+    const spec = JSON.parse(cleaned);
+    sanitizeHandlers(spec);
+    return spec;
   } catch (e) {
     throw new Error(`Failed to parse LLM response as JSON: ${e.message}\n\nRaw:\n${cleaned}`);
   }

@@ -1,9 +1,9 @@
 import { Command } from 'commander';
 import { createRequire } from 'module';
 import { login, logout, getToken } from './auth.js';
-import { generateFormSpec } from './generator.js';
+import { generateFormSpec, editFormSpec } from './generator.js';
 import { renderAsciiPreview } from './ascii-preview.js';
-import { buildEleventySite } from './eleventy-builder.js';
+import { buildEleventySite, generateIndexPage } from './eleventy-builder.js';
 import { startDataServer } from './server.js';
 import { createInterface } from 'readline';
 import { spawn } from 'child_process';
@@ -118,6 +118,116 @@ export function createCli() {
       allForms.forEach(f => console.log(`     • ${f.replace('.html', '')}`));
 
       console.log('\n  Run "adcgen launch" to start the dev server.\n');
+    });
+
+  program
+    .command('edit')
+    .description('Edit an existing form using AI')
+    .argument('[name]', 'Form name to edit')
+    .action(async (name) => {
+      const token = getToken();
+      if (!token) {
+        console.log('⚠️  Not logged in. Run: adcgen login');
+        process.exit(1);
+      }
+
+      const fs = (await import('fs')).default;
+      const siteDir = path.join(PROJECT_ROOT, '_site_src');
+      const dataDir = path.join(PROJECT_ROOT, '_data');
+
+      if (!fs.existsSync(siteDir)) {
+        console.log('⚠️  No forms found. Run: adcgen generate\n');
+        process.exit(1);
+      }
+
+      // List available forms
+      const forms = fs.readdirSync(siteDir)
+        .filter(f => f.endsWith('.html') && f !== 'index.html')
+        .map(f => f.replace('.html', ''));
+
+      if (forms.length === 0) {
+        console.log('⚠️  No forms found. Run: adcgen generate\n');
+        process.exit(1);
+      }
+
+      // Pick a form
+      let formName = name;
+      if (!formName) {
+        console.log('\n📋 Available forms:');
+        forms.forEach((f, i) => console.log(`  ${i + 1}. ${f}`));
+        const choice = await prompt('\n📛 Form name (or number): ');
+        const num = parseInt(choice);
+        formName = (num > 0 && num <= forms.length) ? forms[num - 1] : choice;
+      }
+
+      if (!forms.includes(formName)) {
+        console.log(`⚠️  Form "${formName}" not found.\n`);
+        process.exit(1);
+      }
+
+      // Load spec
+      const specFile = path.join(dataDir, `${formName}_spec.json`);
+      if (!fs.existsSync(specFile)) {
+        console.log(`⚠️  Spec file not found for "${formName}". Cannot edit.\n`);
+        process.exit(1);
+      }
+      const currentSpec = JSON.parse(fs.readFileSync(specFile, 'utf-8'));
+
+      // Show current form
+      console.log('\n📄 Current form:');
+      console.log(renderAsciiPreview(currentSpec));
+
+      // Show event handlers
+      let hasEvents = false;
+      for (const section of currentSpec.sections || []) {
+        for (const field of section.fields || []) {
+          if (field.events && field.events.length > 0) {
+            if (!hasEvents) {
+              console.log('⚡ Event handlers:');
+              hasEvents = true;
+            }
+            for (const evt of field.events) {
+              console.log(`  • ${field.label} [${evt.event}]: ${evt.description || evt.handler}`);
+            }
+          }
+        }
+      }
+      if (hasEvents) console.log('');
+
+      // Get change request
+      const changeRequest = await prompt('✏️  What would you like to change? ');
+      if (!changeRequest) {
+        console.log('No changes requested. Exiting.');
+        process.exit(0);
+      }
+
+      console.log('\n⏳ Applying changes...\n');
+
+      let newSpec;
+      try {
+        newSpec = await editFormSpec(currentSpec, changeRequest);
+      } catch (err) {
+        console.error(`❌ ${err.message}`);
+        process.exit(1);
+      }
+
+      // Preserve formName
+      newSpec.formName = formName;
+
+      // Show updated form
+      console.log('📄 Updated form:');
+      console.log(renderAsciiPreview(newSpec));
+
+      const approval = await prompt('✅ Apply these changes? (y/n): ');
+      if (approval.toLowerCase() !== 'y' && approval.toLowerCase() !== 'yes') {
+        console.log('Changes discarded.\n');
+        process.exit(0);
+      }
+
+      // Rebuild
+      const { siteDir: sd, fileName } = buildEleventySite(newSpec, PROJECT_ROOT);
+      console.log(`\n  ✓ Updated: ${sd}/${fileName}`);
+      console.log('  Run "adcgen launch" to see changes.\n');
     });
 
   program
