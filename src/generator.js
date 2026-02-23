@@ -124,6 +124,12 @@ Return ONLY valid JSON (no markdown fences, no explanation). Keep the same schem
 
 For links to other pages, use type "link" with "href" set to "/<page_name>/" and "label" for the link text.`;
 
+const EDIT_HTML_PROMPT = `You are an HTML form editor. You are given an existing HTML page and a user's requested change.
+
+Apply the requested change to the HTML and return the COMPLETE updated HTML page.
+
+Return ONLY the full HTML (no markdown fences, no explanation). Preserve all existing content, styles, scripts, and structure that are not affected by the change. Keep the GitHub Primer CSS dark mode styling. Keep all form submission logic and event handlers intact unless the user explicitly asks to change them.`;
+
 export async function editFormSpec(currentSpec, changeRequest, availablePages) {
   const token = getToken();
   if (!token) {
@@ -167,4 +173,46 @@ export async function editFormSpec(currentSpec, changeRequest, availablePages) {
   } catch (e) {
     throw new Error(`Failed to parse LLM response as JSON: ${e.message}\n\nRaw:\n${cleaned}`);
   }
+}
+
+export async function editFormHtml(currentHtml, changeRequest, availablePages) {
+  const token = getToken();
+  if (!token) {
+    throw new Error('Not authenticated. Run: adcgen login');
+  }
+
+  const fetch = (await import('node-fetch')).default;
+
+  const pagesContext = (availablePages || []).length > 0
+    ? `\n\nAvailable pages in the site: ${availablePages.map(p => `/${p}/`).join(', ')}`
+    : '';
+
+  const res = await fetch(MODELS_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      messages: [
+        { role: 'system', content: EDIT_HTML_PROMPT },
+        { role: 'user', content: `Current HTML:\n${currentHtml}${pagesContext}\n\nRequested change:\n${changeRequest}` }
+      ],
+      temperature: 0.7,
+      max_tokens: 8000
+    })
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`LLM API error (${res.status}): ${err}`);
+  }
+
+  const data = await res.json();
+  const content = data.choices?.[0]?.message?.content;
+  if (!content) throw new Error('No response from LLM');
+
+  // Strip markdown fences if present
+  return content.replace(/^```(?:html)?\n?/m, '').replace(/\n?```$/m, '').trim();
 }

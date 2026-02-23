@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import { createRequire } from 'module';
 import { login, logout, getToken } from './auth.js';
-import { generateFormSpec, editFormSpec } from './generator.js';
+import { generateFormSpec, editFormSpec, editFormHtml } from './generator.js';
 import { renderAsciiPreview } from './ascii-preview.js';
 import { buildEleventySite, generateIndexPage } from './eleventy-builder.js';
 import { startDataServer } from './server.js';
@@ -218,34 +218,53 @@ export function createCli() {
         process.exit(1);
       }
 
-      // Load spec
+      // Load spec and HTML
       const specFile = path.join(dataDir, `${formName}_spec.json`);
-      if (!fs.existsSync(specFile)) {
-        console.log(`⚠️  Spec file not found for "${formName}". Cannot edit.\n`);
+      const htmlFile = path.join(siteDir, `${formName}.html`);
+
+      if (!fs.existsSync(htmlFile)) {
+        console.log(`⚠️  HTML file not found for "${formName}". Cannot edit.\n`);
         process.exit(1);
       }
-      const currentSpec = JSON.parse(fs.readFileSync(specFile, 'utf-8'));
 
-      // Show current form
-      console.log('\n📄 Current form:');
-      console.log(renderAsciiPreview(currentSpec));
+      const currentHtml = fs.readFileSync(htmlFile, 'utf-8');
+      const hasSpec = fs.existsSync(specFile);
+      const currentSpec = hasSpec ? JSON.parse(fs.readFileSync(specFile, 'utf-8')) : null;
 
-      // Show event handlers
-      let hasEvents = false;
-      for (const section of currentSpec.sections || []) {
-        for (const field of section.fields || []) {
-          if (field.events && field.events.length > 0) {
-            if (!hasEvents) {
-              console.log('⚡ Event handlers:');
-              hasEvents = true;
-            }
-            for (const evt of field.events) {
-              console.log(`  • ${field.label} [${evt.event}]: ${evt.description || evt.handler}`);
+      // Detect if HTML was manually modified (differs from what spec would generate)
+      let useHtmlMode = !hasSpec;
+      if (hasSpec) {
+        const { generateFormHtml } = await import('./eleventy-builder.js');
+        if (typeof generateFormHtml === 'function') {
+          const specHtml = generateFormHtml(currentSpec);
+          useHtmlMode = currentHtml.trim() !== specHtml.trim();
+        }
+      }
+
+      if (useHtmlMode) {
+        console.log('\n📄 Editing HTML directly (manual changes detected)');
+      } else {
+        // Show ASCII preview from spec
+        console.log('\n📄 Current form:');
+        console.log(renderAsciiPreview(currentSpec));
+
+        // Show event handlers
+        let hasEvents = false;
+        for (const section of currentSpec.sections || []) {
+          for (const field of section.fields || []) {
+            if (field.events && field.events.length > 0) {
+              if (!hasEvents) {
+                console.log('⚡ Event handlers:');
+                hasEvents = true;
+              }
+              for (const evt of field.events) {
+                console.log(`  • ${field.label} [${evt.event}]: ${evt.description || evt.handler}`);
+              }
             }
           }
         }
+        if (hasEvents) console.log('');
       }
-      if (hasEvents) console.log('');
 
       // Get change request
       const changeRequest = await prompt('✏️  What would you like to change? ');
@@ -261,31 +280,51 @@ export function createCli() {
         .filter(f => f.endsWith('.html') && f !== 'index.html')
         .map(f => f.replace('.html', ''));
 
-      let newSpec;
-      try {
-        newSpec = await editFormSpec(currentSpec, changeRequest, availablePages);
-      } catch (err) {
-        console.error(`❌ ${err.message}`);
-        process.exit(1);
+      if (useHtmlMode) {
+        // Edit HTML directly
+        let newHtml;
+        try {
+          newHtml = await editFormHtml(currentHtml, changeRequest, availablePages);
+        } catch (err) {
+          console.error(`❌ ${err.message}`);
+          process.exit(1);
+        }
+
+        console.log('📄 Changes applied to HTML.');
+        const approval = await prompt('✅ Save changes? (y/n): ');
+        if (approval.toLowerCase() !== 'y' && approval.toLowerCase() !== 'yes') {
+          console.log('Changes discarded.\n');
+          process.exit(0);
+        }
+
+        fs.writeFileSync(htmlFile, newHtml);
+        console.log(`\n  ✓ Updated: ${htmlFile}`);
+        console.log('  Changes will auto-reload if server is running.\n');
+      } else {
+        // Edit via spec
+        let newSpec;
+        try {
+          newSpec = await editFormSpec(currentSpec, changeRequest, availablePages);
+        } catch (err) {
+          console.error(`❌ ${err.message}`);
+          process.exit(1);
+        }
+
+        newSpec.formName = formName;
+
+        console.log('📄 Updated form:');
+        console.log(renderAsciiPreview(newSpec));
+
+        const approval = await prompt('✅ Apply these changes? (y/n): ');
+        if (approval.toLowerCase() !== 'y' && approval.toLowerCase() !== 'yes') {
+          console.log('Changes discarded.\n');
+          process.exit(0);
+        }
+
+        const { siteDir: sd, fileName } = buildEleventySite(newSpec, PROJECT_ROOT);
+        console.log(`\n  ✓ Updated: ${sd}/${fileName}`);
+        console.log('  Run "adcgen launch" to see changes.\n');
       }
-
-      // Preserve formName
-      newSpec.formName = formName;
-
-      // Show updated form
-      console.log('📄 Updated form:');
-      console.log(renderAsciiPreview(newSpec));
-
-      const approval = await prompt('✅ Apply these changes? (y/n): ');
-      if (approval.toLowerCase() !== 'y' && approval.toLowerCase() !== 'yes') {
-        console.log('Changes discarded.\n');
-        process.exit(0);
-      }
-
-      // Rebuild
-      const { siteDir: sd, fileName } = buildEleventySite(newSpec, PROJECT_ROOT);
-      console.log(`\n  ✓ Updated: ${sd}/${fileName}`);
-      console.log('  Run "adcgen launch" to see changes.\n');
     });
 
   program

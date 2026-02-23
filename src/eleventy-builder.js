@@ -164,7 +164,7 @@ function generateEventHandlerScript(spec) {
   return handlers.join('\n\n');
 }
 
-function generateFormHtml(spec) {
+export function generateFormHtml(spec) {
   const sessionId = SESSION_ID;
   const formName = spec.formName || 'form';
 
