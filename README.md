@@ -19,6 +19,16 @@ A CLI tool that generates HTML data-entry forms using AI and [Eleventy](https://
 
 ## Installation
 
+### One-liner (recommended)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/nirmash/agentic-app-demo/main/setup.sh | bash
+```
+
+This clones the repo to `~/.adcgen-cli`, installs dependencies, and links `adcgen` globally.
+
+### Manual
+
 ```bash
 # Clone the repo
 git clone https://github.com/nirmash/agentic-app-demo.git
@@ -33,6 +43,14 @@ npm link
 # Make sure ~/.npm-global/bin is in your PATH
 echo 'export PATH="$HOME/.npm-global/bin:$PATH"' >> ~/.zshrc
 source ~/.zshrc
+```
+
+### Update
+
+Re-run the setup script to pull the latest version:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/nirmash/agentic-app-demo/main/setup.sh | bash
 ```
 
 ## Quick Start
