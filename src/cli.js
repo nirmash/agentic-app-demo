@@ -50,6 +50,59 @@ export function createCli() {
     });
 
   program
+    .command('list')
+    .description('List all generated forms')
+    .action(async () => {
+      const fs = (await import('fs')).default;
+      const siteDir = path.join(PROJECT_ROOT, '_site_src');
+      if (!fs.existsSync(siteDir)) {
+        console.log('\n  No forms generated yet. Run: adcgen generate\n');
+        return;
+      }
+      const forms = fs.readdirSync(siteDir)
+        .filter(f => f.endsWith('.html') && f !== 'index.html')
+        .map(f => f.replace('.html', ''));
+      if (forms.length === 0) {
+        console.log('\n  No forms generated yet. Run: adcgen generate\n');
+        return;
+      }
+      console.log(`\n  📋 Forms (${forms.length}):\n`);
+      forms.forEach(f => console.log(`     • ${f}`));
+      console.log('');
+    });
+
+  program
+    .command('list_data')
+    .description('List all saved form data records')
+    .action(async () => {
+      const fs = (await import('fs')).default;
+      const dataDir = path.join(PROJECT_ROOT, '_data');
+      if (!fs.existsSync(dataDir)) {
+        console.log('\n  No data records yet.\n');
+        return;
+      }
+      const files = fs.readdirSync(dataDir)
+        .filter(f => f.endsWith('.json') && !f.endsWith('_spec.json'))
+        .sort();
+      if (files.length === 0) {
+        console.log('\n  No data records yet.\n');
+        return;
+      }
+      console.log(`\n  📦 Data records (${files.length}):\n`);
+      for (const f of files) {
+        try {
+          const data = JSON.parse(fs.readFileSync(path.join(dataDir, f), 'utf-8'));
+          const meta = data._meta || {};
+          const date = meta.submittedAt ? new Date(meta.submittedAt).toLocaleString() : '—';
+          console.log(`     • ${f.replace('.json', '')}  (${date})`);
+        } catch {
+          console.log(`     • ${f.replace('.json', '')}`);
+        }
+      }
+      console.log('');
+    });
+
+  program
     .command('generate')
     .description('Generate a new HTML form from a natural language description')
     .argument('[name]', 'Form name (snake_case, e.g. employee_onboarding)')

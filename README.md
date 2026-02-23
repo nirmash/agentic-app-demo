@@ -58,6 +58,8 @@ adcgen launch
 | `adcgen login` | Authenticate with GitHub (via `gh` CLI or manual token) |
 | `adcgen logout` | Remove stored GitHub token |
 | `adcgen token` | Display the stored GitHub token |
+| `adcgen list` | List all generated forms |
+| `adcgen list_data` | List all saved form data records with timestamps |
 | `adcgen generate [name]` | Generate a new form from a natural language description |
 | `adcgen edit [name]` | Edit an existing form using AI — shows current form, event handlers, and prompts for changes |
 | `adcgen launch [--no-open]` | Start Eleventy + data API servers in the background |
