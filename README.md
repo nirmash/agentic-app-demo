@@ -9,6 +9,7 @@ A CLI tool that generates HTML data-entry forms using AI and [Eleventy](https://
 - **ASCII preview** — See a terminal-rendered preview of the form before generating HTML
 - **Multiple forms** — Generate as many forms as you want; an auto-generated index page links to all of them
 - **Supported controls**: text, password, dropdown, checkbox, radio buttons, tables with embedded controls, buttons, links to other pages
+- **Dynamic tables** — Tables include **+ Add Row** and **✕ Delete Row** buttons; table data loads correctly when using `?id=`
 
 ### Editing
 - **AI-powered editing** — Edit existing forms by describing changes in natural language (`adcgen edit`)
