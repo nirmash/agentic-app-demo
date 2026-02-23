@@ -15,7 +15,7 @@ A CLI tool that generates HTML data-entry forms using AI and [Eleventy](https://
 - **Load existing data** — Open a form with `?id=<sessionId>` (e.g., `/add_user/?id=0fd9d199`) to pre-populate from a saved JSON file; re-saving overwrites the same file
 - **Password fields** — Password inputs render with hidden text and a 👁 toggle icon
 - **Buttons & events** — Custom buttons with event handlers; describe the behavior and the LLM generates the JavaScript
-- **Supported controls**: text, password, dropdown, checkbox, radio buttons, tables with embedded controls, buttons
+- **Supported controls**: text, password, dropdown, checkbox, radio buttons, tables with embedded controls, buttons, links to other pages
 
 ## Installation
 

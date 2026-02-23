@@ -15,12 +15,13 @@ Return ONLY valid JSON (no markdown fences, no explanation) matching this schema
       "heading": "Section Title (markdown supported)",
       "fields": [
         {
-          "type": "text|password|dropdown|checkbox|radio|table|button",
+          "type": "text|password|dropdown|checkbox|radio|table|button|link",
           "label": "Field Label",
           "name": "field_name",
           "placeholder": "optional placeholder",
           "required": true|false,
           "options": ["opt1", "opt2"],
+          "href": "/page_name/",
           "columns": [
             { "header": "Col Name", "type": "text|dropdown|checkbox", "name": "col_name", "options": [] }
           ],
@@ -36,7 +37,9 @@ Return ONLY valid JSON (no markdown fences, no explanation) matching this schema
 
 Rules:
 - Use "password" type for any password or secret fields (renders as masked input with toggle)
+- Use "link" type for navigation links to other pages. Set "href" to the page path (e.g. "/add_user/" for the add_user page). The "label" is the link text.
 - "options" is only for dropdown and radio types
+- "href" is only for link type
 - "columns" and "initialRows" are only for table type
 - "events" can be on any field type. For buttons, always include a click event.
 - Generate meaningful "handler" JavaScript code for each event based on the description.
@@ -117,9 +120,11 @@ const EDIT_SYSTEM_PROMPT = `You are a form design assistant. You are given an ex
 
 Apply the requested change and return the COMPLETE updated JSON specification.
 
-Return ONLY valid JSON (no markdown fences, no explanation). Keep the same schema structure. Preserve all existing fields and settings that are not affected by the change. The form element always has id="main-form" — any handler that submits the form MUST use: document.getElementById('main-form').requestSubmit()`;
+Return ONLY valid JSON (no markdown fences, no explanation). Keep the same schema structure. Preserve all existing fields and settings that are not affected by the change. The form element always has id="main-form" — any handler that submits the form MUST use: document.getElementById('main-form').requestSubmit()
 
-export async function editFormSpec(currentSpec, changeRequest) {
+For links to other pages, use type "link" with "href" set to "/<page_name>/" and "label" for the link text.`;
+
+export async function editFormSpec(currentSpec, changeRequest, availablePages) {
   const token = getToken();
   if (!token) {
     throw new Error('Not authenticated. Run: adcgen login');
@@ -137,7 +142,7 @@ export async function editFormSpec(currentSpec, changeRequest) {
       model: MODEL,
       messages: [
         { role: 'system', content: EDIT_SYSTEM_PROMPT },
-        { role: 'user', content: `Current form spec:\n${JSON.stringify(currentSpec, null, 2)}\n\nRequested change:\n${changeRequest}` }
+        { role: 'user', content: `Current form spec:\n${JSON.stringify(currentSpec, null, 2)}\n\nAvailable pages in the site: ${(availablePages || []).map(p => `/${p}/`).join(', ') || 'none'}\n\nRequested change:\n${changeRequest}` }
       ],
       temperature: 0.7,
       max_tokens: 4000

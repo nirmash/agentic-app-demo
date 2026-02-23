@@ -256,9 +256,14 @@ export function createCli() {
 
       console.log('\n⏳ Applying changes...\n');
 
+      // Get available pages for link resolution
+      const availablePages = fs.readdirSync(siteDir)
+        .filter(f => f.endsWith('.html') && f !== 'index.html')
+        .map(f => f.replace('.html', ''));
+
       let newSpec;
       try {
-        newSpec = await editFormSpec(currentSpec, changeRequest);
+        newSpec = await editFormSpec(currentSpec, changeRequest, availablePages);
       } catch (err) {
         console.error(`❌ ${err.message}`);
         process.exit(1);

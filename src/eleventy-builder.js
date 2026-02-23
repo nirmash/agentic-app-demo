@@ -88,6 +88,12 @@ ${indent}</div>`;
     case 'table':
       return generateTableHtml(field, indent);
 
+    case 'link':
+      const href = field.href || '#';
+      return `${indent}<div class="mb-3">
+${indent}  <a class="Link" href="${escapeHtml(href)}">${escapeHtml(field.label || 'Link')}</a>
+${indent}</div>`;
+
     default:
       return `${indent}<!-- Unknown field type: ${field.type} -->`;
   }

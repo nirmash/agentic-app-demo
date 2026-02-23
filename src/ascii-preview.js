@@ -119,6 +119,7 @@ export function renderAsciiPreview(spec) {
         case 'radio':    output.push(...renderRadio(field)); break;
         case 'button':   output.push(...renderButton(field)); break;
         case 'table':    output.push(...renderTable(field)); break;
+        case 'link':     output.push(boxRow(` 🔗 ${field.label} → ${field.href || '#'}`)); break;
         default:         output.push(...renderTextField(field)); break;
       }
       output.push(emptyRow());
