@@ -119,7 +119,8 @@ adcgen launch
 ```
 ├── bin/
 │   ├── adcgen.js              # CLI entry point
-│   └── adcgen-serve.js        # Background server process (Eleventy + data API)
+│   ├── adcgen-serve.js        # Background server process (Eleventy + data API)
+│   └── deploy-server.js       # Production server (static + API on single port)
 ├── src/
 │   ├── cli.js                 # Commander setup & command routing
 │   ├── auth.js                # GitHub auth (gh CLI / manual token)
@@ -127,8 +128,12 @@ adcgen launch
 │   ├── ascii-preview.js       # ASCII art form renderer
 │   ├── eleventy-builder.js    # HTML generator with Primer CSS dark mode
 │   └── server.js              # Express API for saving/loading form data as JSON
+├── test/
+│   ├── all-controls.test.js   # Automated test suite (71 tests)
+│   └── fixtures/              # Test form specs
 ├── eleventy.config.js         # Eleventy configuration
 ├── setup.sh                   # One-liner install script
+├── deploy.sh                  # Production deployment script
 ├── _site_src/                 # Generated form HTML source (Eleventy input)
 ├── _site/                     # Built site output (Eleventy output)
 ├── _data/                     # Saved form submissions & specs (JSON)
@@ -169,6 +174,31 @@ The generated HTML has clearly marked zones:
 <script>...</script>
 <!-- END DO NOT EDIT -->
 ```
+
+## Deployment
+
+### ADC Sandbox (or any Linux server with Node 20+)
+
+A single script handles everything — clone, install, build, and serve on port 80:
+
+```bash
+# On the sandbox / server:
+bash deploy.sh
+
+# Custom port:
+PORT=3000 bash deploy.sh
+```
+
+The deploy script:
+1. Clones (or updates) the repo to `/app`
+2. Installs production dependencies
+3. Builds all forms from `_data/*_spec.json` specs (or the demo test form if none exist)
+4. Patches API URLs for same-origin serving (no separate API port needed)
+5. Starts a combined static + API server on the specified port
+
+**Key files:**
+- `deploy.sh` — Orchestrates the full deployment
+- `bin/deploy-server.js` — Production server (static files + API on a single port)
 
 ## Requirements
 
