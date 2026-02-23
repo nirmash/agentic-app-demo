@@ -4,8 +4,10 @@
 # and optionally starts the production server.
 #
 # Usage:
-#   On the sandbox:  bash deploy.sh           # setup only (use adcgen CLI after)
-#                    bash deploy.sh --serve    # setup + start server on port 80
+#   On the sandbox:  bash deploy.sh                          # setup only
+#                    bash deploy.sh --serve                   # setup + start server
+#   With token:      bash deploy.sh --token ghp_xxxx         # setup + configure auth
+#                    GITHUB_TOKEN=ghp_xxxx bash deploy.sh     # same via env var
 #   Custom port:     bash deploy.sh --serve --port 3000
 set -e
 
@@ -13,12 +15,14 @@ PORT="${PORT:-80}"
 APP_DIR="/app"
 REPO="https://github.com/nirmash/agentic-app-demo.git"
 SERVE=false
+TOKEN=""
 
 # Parse args
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --port) PORT="$2"; shift 2 ;;
     --serve) SERVE=true; shift ;;
+    --token) TOKEN="$2"; shift 2 ;;
     *) shift ;;
   esac
 done
@@ -41,6 +45,17 @@ echo "  Installing dependencies..."
 npm install --quiet 2>/dev/null
 npm link --quiet 2>/dev/null
 echo "  ✅ adcgen CLI linked globally"
+
+# Configure GitHub token if provided
+if [ -n "$TOKEN" ]; then
+  mkdir -p ~/.adcgen
+  echo "{\"github_token\": \"$TOKEN\"}" > ~/.adcgen/config.json
+  echo "  ✅ GitHub token configured"
+elif [ -n "$GITHUB_TOKEN" ]; then
+  mkdir -p ~/.adcgen
+  echo "{\"github_token\": \"$GITHUB_TOKEN\"}" > ~/.adcgen/config.json
+  echo "  ✅ GitHub token configured (from GITHUB_TOKEN env)"
+fi
 
 # Build site from any existing specs
 echo "  Building site..."

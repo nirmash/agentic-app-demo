@@ -183,8 +183,12 @@ A single script handles everything — clone, install, link CLI globally, build,
 
 ```bash
 # On the sandbox / server:
-bash deploy.sh              # Setup only — adcgen CLI is available after this
-bash deploy.sh --serve      # Setup + start web server on port 80
+bash deploy.sh                              # Setup only — adcgen CLI is available after this
+bash deploy.sh --serve                      # Setup + start web server on port 80
+bash deploy.sh --token ghp_xxxx --serve     # Setup with GitHub token + start server
+
+# Or pass the token via env var:
+GITHUB_TOKEN=ghp_xxxx bash deploy.sh --serve
 
 # Custom port:
 bash deploy.sh --serve --port 3000
