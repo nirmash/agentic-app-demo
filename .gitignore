@@ -2,3 +2,5 @@ node_modules/
 _site/
 _site_src/
 _data/
+.adcgen.pid
+.adcgen-eleventy.log

@@ -28,6 +28,25 @@ export function startDataServer(dataDir, port = 3001) {
     res.json({ ok: true, file: fileName });
   });
 
+  app.get('/api/load', (req, res) => {
+    const { formName, id } = req.query;
+    if (!formName || !id) return res.status(400).json({ error: 'formName and id required' });
+
+    const fileName = `${formName}_${id}.json`;
+    const filePath = path.join(dataDir, fileName);
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    try {
+      const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+      res.json({ ok: true, data });
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to read file' });
+    }
+  });
+
   return new Promise((resolve) => {
     const server = app.listen(port, () => {
       console.log(`  📡 Data server running on http://localhost:${port}`);

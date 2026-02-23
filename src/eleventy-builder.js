@@ -223,7 +223,63 @@ ${sectionsHtml}
 
   <script>
     const FORM_NAME = '${formName}';
-    const SESSION_ID = '${sessionId}';
+    let SESSION_ID = '${sessionId}';
+
+    // Check URL for ?id= param to load existing data
+    const urlParams = new URLSearchParams(window.location.search);
+    const loadId = urlParams.get('id');
+    if (loadId) SESSION_ID = loadId;
+
+    // Populate form fields from a data object
+    function populateForm(data) {
+      const form = document.getElementById('main-form');
+      for (const [key, value] of Object.entries(data)) {
+        if (key === '_meta') continue;
+
+        // Handle table data (arrays of objects)
+        if (Array.isArray(value)) {
+          value.forEach((row, rowIdx) => {
+            if (row && typeof row === 'object') {
+              for (const [col, cellVal] of Object.entries(row)) {
+                const cellName = key + '_' + col + '_' + rowIdx;
+                const el = form.querySelector('[name="' + cellName + '"]');
+                if (el) {
+                  if (el.type === 'checkbox') el.checked = !!cellVal;
+                  else el.value = cellVal;
+                }
+              }
+            }
+          });
+          continue;
+        }
+
+        const elements = form.querySelectorAll('[name="' + key + '"]');
+        if (elements.length === 0) continue;
+
+        const el = elements[0];
+        if (el.type === 'checkbox') {
+          if (elements.length > 1) {
+            // Multi-checkbox: value is array
+            const vals = Array.isArray(value) ? value : [value];
+            elements.forEach(cb => { cb.checked = vals.includes(cb.value); });
+          } else {
+            el.checked = value === true || value === 'on' || value === el.value;
+          }
+        } else if (el.type === 'radio') {
+          elements.forEach(r => { r.checked = r.value === value; });
+        } else {
+          el.value = value;
+        }
+      }
+    }
+
+    // Load existing data if ?id= is present
+    if (loadId) {
+      fetch('http://localhost:3001/api/load?formName=' + FORM_NAME + '&id=' + loadId)
+        .then(r => r.ok ? r.json() : null)
+        .then(result => { if (result && result.data) populateForm(result.data); })
+        .catch(() => {});
+    }
 
     // Collect all form data including tables
     function collectFormData() {

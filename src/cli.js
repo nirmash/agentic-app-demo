@@ -232,7 +232,7 @@ export function createCli() {
 
   program
     .command('launch')
-    .description('Start Eleventy dev server and data API for the generated form')
+    .description('Start Eleventy dev server and data API in the background')
     .option('--no-open', 'Do not open the browser automatically')
     .action(async (opts) => {
       const fs = (await import('fs')).default;
@@ -242,51 +242,84 @@ export function createCli() {
         process.exit(1);
       }
 
-      // Find the form HTML file
       const files = fs.readdirSync(siteDir).filter(f => f.endsWith('.html'));
       if (files.length === 0) {
         console.log('⚠️  No form files found in _site_src/. Run: adcgen generate\n');
         process.exit(1);
       }
-      const fileName = files[0];
       const dataDir = path.join(PROJECT_ROOT, '_data');
+      const pidFile = path.join(PROJECT_ROOT, '.adcgen.pid');
 
-      // Start the data server
+      // Check if already running
+      if (fs.existsSync(pidFile)) {
+        try {
+          const pids = JSON.parse(fs.readFileSync(pidFile, 'utf-8'));
+          const alive = pids.some(pid => { try { process.kill(pid, 0); return true; } catch { return false; } });
+          if (alive) {
+            console.log('⚠️  Server already running. Use "adcgen stop" first.\n');
+            process.exit(1);
+          }
+        } catch { /* stale pid file */ }
+      }
+
+      // Start data server
       await startDataServer(dataDir);
+      const dataServerPid = process.pid;
 
-      // Run Eleventy
-      console.log('\n🚀 Starting Eleventy dev server...\n');
+      // Start Eleventy detached
+      const eleventyLog = fs.openSync(path.join(PROJECT_ROOT, '.adcgen-eleventy.log'), 'w');
       const eleventy = spawn('npx', ['@11ty/eleventy', '--serve', '--port=8080'], {
         cwd: PROJECT_ROOT,
-        stdio: 'inherit',
-        shell: true
+        stdio: ['ignore', eleventyLog, eleventyLog],
+        shell: true,
+        detached: true
       });
+      eleventy.unref();
 
-      eleventy.on('error', (err) => {
-        console.error(`Failed to start Eleventy: ${err.message}`);
-        process.exit(1);
-      });
+      // Save PIDs
+      fs.writeFileSync(pidFile, JSON.stringify([eleventy.pid, dataServerPid]));
 
-      // Open browser after a short delay (unless --no-open)
+      console.log('\n🚀 Servers started in background:');
+      console.log('  • Eleventy:    http://localhost:8080  (PID: ' + eleventy.pid + ')');
+      console.log('  • Data API:    http://localhost:3001  (PID: ' + dataServerPid + ')');
+      console.log('  • Logs:        .adcgen-eleventy.log');
+      console.log('\n  Use "adcgen stop" to shut down.\n');
+
+      // Open browser
       if (opts.open !== false) {
         setTimeout(async () => {
           try {
             const open = (await import('open')).default;
-            const formUrl = `http://localhost:8080/`;
-            console.log(`\n  🌐 Opening ${formUrl}\n`);
-            await open(formUrl);
-          } catch {
-            // Silently fail if browser can't open
-          }
+            await open('http://localhost:8080/');
+          } catch { /* ignore */ }
         }, 3000);
       }
+    });
 
-      // Handle Ctrl+C
-      process.on('SIGINT', () => {
-        console.log('\n\n👋 Shutting down...');
-        eleventy.kill();
-        process.exit(0);
-      });
+  program
+    .command('stop')
+    .description('Stop the running dev servers')
+    .action(async () => {
+      const fs = (await import('fs')).default;
+      const pidFile = path.join(PROJECT_ROOT, '.adcgen.pid');
+      if (!fs.existsSync(pidFile)) {
+        console.log('⚠️  No running servers found.\n');
+        return;
+      }
+      try {
+        const pids = JSON.parse(fs.readFileSync(pidFile, 'utf-8'));
+        for (const pid of pids) {
+          try {
+            process.kill(-pid, 'SIGTERM');
+          } catch {
+            try { process.kill(pid, 'SIGTERM'); } catch { /* already dead */ }
+          }
+        }
+        fs.unlinkSync(pidFile);
+        console.log('  👋 Servers stopped.\n');
+      } catch (err) {
+        console.log(`⚠️  Error stopping servers: ${err.message}\n`);
+      }
     });
 
   program
