@@ -308,13 +308,29 @@ export function createCli() {
       // Check if already running
       if (fs.existsSync(pidFile)) {
         try {
-          const pids = JSON.parse(fs.readFileSync(pidFile, 'utf-8'));
+          const raw = JSON.parse(fs.readFileSync(pidFile, 'utf-8'));
+          const pids = Array.isArray(raw) ? raw : (raw.pids || []);
           const alive = pids.some(pid => { try { process.kill(pid, 0); return true; } catch { return false; } });
           if (alive) {
             console.log('⚠️  Server already running. Use "adcgen stop" first.\n');
             process.exit(1);
           }
+          // Stale PID file, clean up
+          fs.unlinkSync(pidFile);
         } catch { /* stale pid file */ }
+      }
+
+      // Check if ports are free
+      const { execSync: exec } = await import('child_process');
+      for (const checkPort of [port, '3001']) {
+        try {
+          const pid = exec(`lsof -ti :${checkPort} 2>/dev/null`, { encoding: 'utf-8' }).trim();
+          if (pid) {
+            console.log(`⚠️  Port ${checkPort} is already in use (PID: ${pid}).`);
+            console.log(`   Run: kill ${pid}\n`);
+            process.exit(1);
+          }
+        } catch { /* port is free */ }
       }
 
       // Start both servers in a single detached child process
