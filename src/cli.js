@@ -423,6 +423,29 @@ export function createCli() {
       console.log('\n  ✅ All generated files cleaned.\n');
     });
 
+  program
+    .command('rebuild')
+    .description('Rebuild all forms from their saved specs (picks up latest features)')
+    .action(async () => {
+      const fs = (await import('fs')).default;
+      const dataDir = path.join(PROJECT_ROOT, '_data');
+      if (!fs.existsSync(dataDir)) {
+        console.log('⚠️  No specs found. Run: adcgen generate\n');
+        return;
+      }
+      const specs = fs.readdirSync(dataDir).filter(f => f.endsWith('_spec.json'));
+      if (specs.length === 0) {
+        console.log('⚠️  No specs found. Run: adcgen generate\n');
+        return;
+      }
+      for (const f of specs) {
+        const spec = JSON.parse(fs.readFileSync(path.join(dataDir, f), 'utf-8'));
+        buildEleventySite(spec, PROJECT_ROOT);
+        console.log(`  ✓ Rebuilt: ${spec.formName}`);
+      }
+      console.log(`\n  ✅ ${specs.length} form${specs.length !== 1 ? 's' : ''} rebuilt.\n`);
+    });
+
   // Show help if no command given
   program.action(() => {
     program.help();

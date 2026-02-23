@@ -65,6 +65,7 @@ adcgen launch
 | `adcgen launch [--no-open]` | Start Eleventy + data API servers in the background |
 | `adcgen stop` | Stop the running background servers |
 | `adcgen rm <names...>` | Remove one or more forms by name |
+| `adcgen rebuild` | Rebuild all forms from saved specs (picks up latest features) |
 | `adcgen clean` | Delete all generated forms and site output |
 
 ## Project Structure
