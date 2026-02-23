@@ -171,11 +171,15 @@ export function generateFormHtml(spec) {
   let sectionsHtml = '';
   for (const section of spec.sections || []) {
     if (section.heading) {
-      sectionsHtml += `\n      <h3 class="h3 mb-3 pb-2 border-bottom">${escapeHtml(section.heading)}</h3>\n`;
+      sectionsHtml += `\n      <!-- ✅ SAFE TO EDIT: Section headings, text, and links -->
+      <h3 class="h3 mb-3 pb-2 border-bottom">${escapeHtml(section.heading)}</h3>
+      <!-- END SAFE TO EDIT -->\n`;
     }
+    sectionsHtml += `      <!-- ⚠️ DO NOT EDIT: Form fields managed by adcgen. Use "adcgen edit" to change. -->\n`;
     for (const field of section.fields || []) {
       sectionsHtml += generateFieldHtml(field) + '\n';
     }
+    sectionsHtml += `      <!-- END DO NOT EDIT -->\n`;
   }
 
   const eventScript = generateEventHandlerScript(spec);
@@ -224,11 +228,10 @@ export function generateFormHtml(spec) {
       <h1 class="h2">${escapeHtml(spec.title)}</h1>
     </div>
 
-    <!-- ✅ SAFE TO EDIT: Form content below -->
+    <!-- You may add text, headings, and links around sections. Do NOT edit form fields — use "adcgen edit" instead. -->
     <form id="main-form">
 ${sectionsHtml}
     </form>
-    <!-- END SAFE TO EDIT -->
   </div>
 
   <!-- ⚠️ DO NOT EDIT: Form submission and data loading scripts managed by adcgen -->
