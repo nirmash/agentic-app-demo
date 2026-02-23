@@ -335,7 +335,7 @@ ${sectionsHtml}
             el.value = (result == null ? '' : result);
           } else {
             // Template mode: replace {col_name} placeholders
-            el.value = formula.replace(/\{(\w+)\}/g, function(m, name) { return vals[name] || ''; });
+            el.value = formula.replace(/\\{(\\w+)\\}/g, function(m, name) { return vals[name] || ''; });
           }
         } catch(e) { el.value = ''; }
       });

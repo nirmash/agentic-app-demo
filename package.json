@@ -9,7 +9,8 @@
   "scripts": {
     "start": "node bin/adcgen.js",
     "build": "npx @11ty/eleventy",
-    "serve": "npx @11ty/eleventy --serve"
+    "serve": "npx @11ty/eleventy --serve",
+    "test": "node --test test/*.test.js"
   },
   "keywords": ["form-generator", "eleventy", "copilot", "cli"],
   "license": "MIT",

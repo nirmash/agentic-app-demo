@@ -22,7 +22,8 @@ A CLI tool that generates HTML data-entry forms using AI and [Eleventy](https://
 ### Styling & UX
 - **GitHub dark mode** — Generated forms use [Primer CSS](https://primer.style/css/) in dark mode, matching GitHub.com's look
 - **Password fields** — Password inputs render with hidden text and a 👁 toggle icon
-- **Buttons & events** — Custom buttons with event handlers; describe the behavior and the LLM generates the JavaScript
+- **Buttons & events** — Custom buttons with event handlers; describe the behavior and the LLM generates the JavaScript. Events (`click`, `change`, `input`, etc.) can be attached to any field type, not just buttons.
+- **Toast notifications** — A success toast appears on form submission and auto-hides after 3 seconds
 - **Safe edit zones** — Generated HTML has comments marking which sections are safe to edit manually (headings, text, links) and which are managed by adcgen (form fields, styles, scripts)
 
 ### Data & Persistence
@@ -39,6 +40,8 @@ A CLI tool that generates HTML data-entry forms using AI and [Eleventy](https://
 
 ### Authentication
 - **GitHub auth** — Login via `gh` CLI (auto-detected) or paste a GitHub PAT
+- **`GITHUB_TOKEN` env var** — Automatically uses the `GITHUB_TOKEN` environment variable if set (useful for CI)
+- **Token validation** — Tokens are validated against the GitHub API on login
 - **Friendly errors** — Helpful messages if `gh` is not installed or not authenticated
 
 ## Installation
