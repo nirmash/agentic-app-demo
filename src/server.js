@@ -1,0 +1,37 @@
+import express from 'express';
+import fs from 'fs';
+import path from 'path';
+import { v4 as uuidv4 } from 'uuid';
+
+export function startDataServer(dataDir, port = 3001) {
+  const app = express();
+  app.use(express.json());
+
+  // CORS for Eleventy dev server
+  app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
+    if (req.method === 'OPTIONS') return res.sendStatus(200);
+    next();
+  });
+
+  app.post('/api/save', (req, res) => {
+    const { formName, sessionId, data } = req.body;
+    if (!data) return res.status(400).json({ error: 'No data provided' });
+
+    fs.mkdirSync(dataDir, { recursive: true });
+    const fileName = `${formName || 'form'}_${sessionId || uuidv4().split('-')[0]}.json`;
+    const filePath = path.join(dataDir, fileName);
+
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+    console.log(`  💾 Saved: ${filePath}`);
+    res.json({ ok: true, file: fileName });
+  });
+
+  return new Promise((resolve) => {
+    const server = app.listen(port, () => {
+      console.log(`  📡 Data server running on http://localhost:${port}`);
+      resolve(server);
+    });
+  });
+}

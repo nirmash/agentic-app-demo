@@ -1,0 +1,26 @@
+{
+  "name": "adcgen",
+  "version": "1.0.0",
+  "description": "CLI tool that generates HTML forms using Eleventy and GitHub Copilot",
+  "type": "module",
+  "bin": {
+    "adcgen": "./bin/adcgen.js"
+  },
+  "scripts": {
+    "start": "node bin/adcgen.js",
+    "build": "npx @11ty/eleventy",
+    "serve": "npx @11ty/eleventy --serve"
+  },
+  "keywords": ["form-generator", "eleventy", "copilot", "cli"],
+  "license": "MIT",
+  "dependencies": {
+    "@11ty/eleventy": "^3.0.0",
+    "@copilot-extensions/preview-sdk": "^5.0.0",
+    "commander": "^12.0.0",
+    "express": "^4.21.0",
+    "inquirer": "^9.2.0",
+    "node-fetch": "^3.3.0",
+    "open": "^10.0.0",
+    "uuid": "^9.0.0"
+  }
+}
