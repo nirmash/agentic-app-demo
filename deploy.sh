@@ -84,10 +84,6 @@ if (specs.length === 0) {
 # Run Eleventy build
 npx @11ty/eleventy --quiet 2>/dev/null
 
-# Fix API URLs: replace localhost:3001 with same-origin relative paths
-find _site -name '*.html' -exec sed -i 's|http://localhost:3001/api/|/api/|g' {} +
-echo "  API URLs patched for same-origin"
-
 echo ""
 echo "✅ adcgen deployed to $APP_DIR"
 echo "   Run 'adcgen' to see all commands"

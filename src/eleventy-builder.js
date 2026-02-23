@@ -249,6 +249,10 @@ ${sectionsHtml}
     const FORM_NAME = '${formName}';
     let SESSION_ID = '${sessionId}';
 
+    // Auto-detect API base: same origin in production, localhost:3001 in Eleventy dev
+    const API_BASE = (location.port === '3001' || location.port === '80' || location.port === '443' || location.port === '')
+      ? '' : 'http://localhost:3001';
+
     // Check URL for ?id= param to load existing data
     const urlParams = new URLSearchParams(window.location.search);
     const loadId = urlParams.get('id');
@@ -415,7 +419,7 @@ ${sectionsHtml}
 
     // Load existing data if ?id= is present
     if (loadId) {
-      fetch('http://localhost:3001/api/load?formName=' + FORM_NAME + '&id=' + loadId)
+      fetch(API_BASE + '/api/load?formName=' + FORM_NAME + '&id=' + loadId)
         .then(r => r.ok ? r.json() : null)
         .then(result => {
           if (result && result.data) {
@@ -486,7 +490,7 @@ ${sectionsHtml}
       };
 
       try {
-        const res = await fetch('http://localhost:3001/api/save', {
+        const res = await fetch(API_BASE + '/api/save', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ formName: FORM_NAME, sessionId: SESSION_ID, data })

@@ -197,9 +197,11 @@ bash deploy.sh --serve --port 3000
 The deploy script:
 1. Clones (or updates) the repo to `/app`
 2. Installs dependencies and runs `npm link` so `adcgen` is in PATH
-3. Builds all forms from `_data/*_spec.json` specs (or the demo test form if none exist)
-4. Patches API URLs for same-origin serving (no separate API port needed)
+3. Configures GitHub token for AI-powered form generation
+4. Builds all forms from `_data/*_spec.json` specs (or the demo test form if none exist)
 5. With `--serve`: starts a combined static + API server on the specified port
+
+> **Note**: Forms auto-detect the API URL — they work on both local dev (Eleventy port 8080 + API port 3001) and production (single port) without any URL patching.
 
 **Key files:**
 - `deploy.sh` — Orchestrates the full deployment
