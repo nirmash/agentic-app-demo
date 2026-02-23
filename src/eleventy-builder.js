@@ -187,6 +187,7 @@ export function generateFormHtml(spec) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${escapeHtml(spec.title)}</title>
   <link rel="stylesheet" href="https://unpkg.com/@primer/css@21.3.1/dist/primer.css">
+  <!-- ⚠️ DO NOT EDIT: Styles managed by adcgen -->
   <style>
     body { background-color: var(--bgColor-default, #0d1117); color: var(--fgColor-default, #e6edf3); }
     .form-container {
@@ -213,6 +214,7 @@ export function generateFormHtml(spec) {
       display: none; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
   </style>
+  <!-- END DO NOT EDIT -->
 </head>
 <body>
   <div class="toast-success" id="toast">✓ Data saved successfully!</div>
@@ -222,11 +224,14 @@ export function generateFormHtml(spec) {
       <h1 class="h2">${escapeHtml(spec.title)}</h1>
     </div>
 
+    <!-- ✅ SAFE TO EDIT: Form content below -->
     <form id="main-form">
 ${sectionsHtml}
     </form>
+    <!-- END SAFE TO EDIT -->
   </div>
 
+  <!-- ⚠️ DO NOT EDIT: Form submission and data loading scripts managed by adcgen -->
   <script>
     const FORM_NAME = '${formName}';
     let SESSION_ID = '${sessionId}';
@@ -355,6 +360,7 @@ ${sectionsHtml}
     // Custom event handlers
 ${eventScript}
   </script>
+  <!-- END DO NOT EDIT -->
 </body>
 </html>`;
 }

@@ -243,10 +243,8 @@ export function createCli() {
         }
       }
 
-      if (useHtmlMode) {
-        console.log('\n📄 Editing HTML directly (manual changes detected)');
-      } else {
-        // Show ASCII preview from spec
+      // Show ASCII preview from spec (always, if spec exists)
+      if (currentSpec) {
         console.log('\n📄 Current form:');
         console.log(renderAsciiPreview(currentSpec));
 
@@ -266,6 +264,10 @@ export function createCli() {
           }
         }
         if (hasEvents) console.log('');
+      }
+
+      if (useHtmlMode) {
+        console.log('  ℹ️  Manual changes detected — editing HTML directly.\n');
       }
 
       // Get change request
