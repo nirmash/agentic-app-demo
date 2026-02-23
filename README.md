@@ -4,18 +4,39 @@ A CLI tool that generates HTML data-entry forms using AI and [Eleventy](https://
 
 ## Features
 
+### Form Generation
 - **AI form generation** — Describe a form in plain English; the LLM (GPT-4o via GitHub Models API) produces a complete form spec
 - **ASCII preview** — See a terminal-rendered preview of the form before generating HTML
-- **GitHub dark mode styling** — Generated forms use [Primer CSS](https://primer.style/css/) in dark mode, matching GitHub.com's look
 - **Multiple forms** — Generate as many forms as you want; an auto-generated index page links to all of them
+- **Supported controls**: text, password, dropdown, checkbox, radio buttons, tables with embedded controls, buttons, links to other pages
+
+### Editing
 - **AI-powered editing** — Edit existing forms by describing changes in natural language (`adcgen edit`)
-- **GitHub authentication** — Login via `gh` CLI or paste a GitHub PAT (`adcgen login`)
-- **Background dev server** — `adcgen launch` starts Eleventy + data API in the background so you can keep using the CLI
-- **Form submission → JSON** — Submitted form data is saved as `<formname>_<sessionId>.json` in the `_data/` folder via a local API server
-- **Load existing data** — Open a form with `?id=<sessionId>` (e.g., `/add_user/?id=0fd9d199`) to pre-populate from a saved JSON file; re-saving overwrites the same file
+- **HTML-aware editing** — If you manually edit the HTML, `adcgen edit` detects the changes and sends the actual HTML to the LLM, preserving your formatting and custom text
+- **Spec-based editing** — Unmodified forms are edited via JSON spec with ASCII preview for faster iteration
+- **Cross-page links** — Ask the editor to "add a link to the add_user page" and it resolves available pages automatically
+
+### Styling & UX
+- **GitHub dark mode** — Generated forms use [Primer CSS](https://primer.style/css/) in dark mode, matching GitHub.com's look
 - **Password fields** — Password inputs render with hidden text and a 👁 toggle icon
 - **Buttons & events** — Custom buttons with event handlers; describe the behavior and the LLM generates the JavaScript
-- **Supported controls**: text, password, dropdown, checkbox, radio buttons, tables with embedded controls, buttons, links to other pages
+- **Safe edit zones** — Generated HTML has comments marking which sections are safe to edit manually (headings, text, links) and which are managed by adcgen (form fields, styles, scripts)
+
+### Data & Persistence
+- **Form submission → JSON** — Submitted form data is saved as `<formname>_<sessionId>.json` in the `_data/` folder via a local API server
+- **Load existing data** — Open a form with `?id=<sessionId>` (e.g., `/add_user/?id=0fd9d199`) to pre-populate from a saved JSON file; re-saving overwrites the same file
+- **List saved records** — `adcgen list_data` shows all saved form data with submission timestamps
+
+### Server & DevOps
+- **Background dev server** — `adcgen launch` starts Eleventy + data API in the background and returns immediately
+- **Custom port** — `adcgen launch --port 3000` to use a custom port
+- **Process management** — `adcgen ps` shows running servers, `adcgen stop` kills them
+- **Port conflict detection** — Launch checks if ports are free and shows blocking PIDs
+- **Rebuild** — `adcgen rebuild` regenerates all forms from saved specs to pick up new features
+
+### Authentication
+- **GitHub auth** — Login via `gh` CLI (auto-detected) or paste a GitHub PAT
+- **Friendly errors** — Helpful messages if `gh` is not installed or not authenticated
 
 ## Installation
 
@@ -79,8 +100,8 @@ adcgen launch
 | `adcgen list` | List all generated forms |
 | `adcgen list_data` | List all saved form data records with timestamps |
 | `adcgen generate [name]` | Generate a new form from a natural language description |
-| `adcgen edit [name]` | Edit an existing form using AI — shows current form, event handlers, and prompts for changes |
-| `adcgen launch [--no-open]` | Start Eleventy + data API servers in the background |
+| `adcgen edit [name]` | Edit a form using AI — auto-detects manual changes and preserves them |
+| `adcgen launch [--port N] [--no-open]` | Start Eleventy + data API servers in the background |
 | `adcgen ps` | Show status of running adcgen servers |
 | `adcgen stop` | Stop the running background servers |
 | `adcgen rm <names...>` | Remove one or more forms by name |
@@ -90,18 +111,21 @@ adcgen launch
 ## Project Structure
 
 ```
-├── bin/adcgen.js            # CLI entry point
+├── bin/
+│   ├── adcgen.js              # CLI entry point
+│   └── adcgen-serve.js        # Background server process (Eleventy + data API)
 ├── src/
-│   ├── cli.js               # Commander setup & command routing
-│   ├── auth.js              # GitHub auth (gh CLI / manual token)
-│   ├── generator.js         # LLM calls for form generation & editing
-│   ├── ascii-preview.js     # ASCII art form renderer
-│   ├── eleventy-builder.js  # HTML generator with Primer CSS dark mode
-│   └── server.js            # Express API for saving form data as JSON
-├── eleventy.config.js       # Eleventy configuration
-├── _site_src/               # Generated form HTML source (Eleventy input)
-├── _site/                   # Built site output (Eleventy output)
-├── _data/                   # Saved form submissions & specs (JSON)
+│   ├── cli.js                 # Commander setup & command routing
+│   ├── auth.js                # GitHub auth (gh CLI / manual token)
+│   ├── generator.js           # LLM calls for form generation, spec editing & HTML editing
+│   ├── ascii-preview.js       # ASCII art form renderer
+│   ├── eleventy-builder.js    # HTML generator with Primer CSS dark mode
+│   └── server.js              # Express API for saving/loading form data as JSON
+├── eleventy.config.js         # Eleventy configuration
+├── setup.sh                   # One-liner install script
+├── _site_src/                 # Generated form HTML source (Eleventy input)
+├── _site/                     # Built site output (Eleventy output)
+├── _data/                     # Saved form submissions & specs (JSON)
 └── package.json
 ```
 
@@ -111,9 +135,34 @@ adcgen launch
 2. The spec is rendered as **ASCII art** in the terminal for review
 3. On approval, the spec is converted to a full **HTML page** with Primer CSS (GitHub dark mode)
 4. The HTML is written to `_site_src/` and an **index page** with links to all forms is regenerated
-5. **`adcgen launch`** starts Eleventy's dev server (port 8080) and a data API (port 3001) in the background
+5. **`adcgen launch`** starts Eleventy's dev server and a data API as a background process
 6. When a user fills out a form and clicks **Submit**, the data is POSTed to the API and saved as a JSON file in `_data/`
-7. **`adcgen edit`** loads the existing form spec, shows it with event handlers, and sends your change request to the LLM for modification
+7. **Load saved data** by opening a form with `?id=<sessionId>` — the data is fetched from the API and pre-populated
+8. **`adcgen edit`** detects whether the HTML was manually modified:
+   - **Unmodified**: edits via JSON spec with ASCII preview
+   - **Modified**: sends actual HTML to the LLM, preserving your manual changes
+
+### Generated HTML Structure
+
+The generated HTML has clearly marked zones:
+
+```html
+<!-- ⚠️ DO NOT EDIT: Styles managed by adcgen -->
+<style>...</style>
+<!-- END DO NOT EDIT -->
+
+<!-- ✅ SAFE TO EDIT: Section headings, text, and links -->
+<h3>Section Title</h3>
+<!-- END SAFE TO EDIT -->
+
+<!-- ⚠️ DO NOT EDIT: Form fields managed by adcgen. Use "adcgen edit" to change. -->
+<div class="form-group">...</div>
+<!-- END DO NOT EDIT -->
+
+<!-- ⚠️ DO NOT EDIT: Form submission and data loading scripts -->
+<script>...</script>
+<!-- END DO NOT EDIT -->
+```
 
 ## Requirements
 
