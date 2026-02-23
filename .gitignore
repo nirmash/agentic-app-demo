@@ -3,4 +3,5 @@ _site/
 _site_src/
 _data/
 .adcgen.pid
+.adcgen-server.log
 .adcgen-eleventy.log

@@ -63,6 +63,7 @@ adcgen launch
 | `adcgen generate [name]` | Generate a new form from a natural language description |
 | `adcgen edit [name]` | Edit an existing form using AI — shows current form, event handlers, and prompts for changes |
 | `adcgen launch [--no-open]` | Start Eleventy + data API servers in the background |
+| `adcgen ps` | Show status of running adcgen servers |
 | `adcgen stop` | Stop the running background servers |
 | `adcgen rm <names...>` | Remove one or more forms by name |
 | `adcgen rebuild` | Rebuild all forms from saved specs (picks up latest features) |

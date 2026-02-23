@@ -287,8 +287,10 @@ export function createCli() {
     .command('launch')
     .description('Start Eleventy dev server and data API in the background')
     .option('--no-open', 'Do not open the browser automatically')
+    .option('--port <number>', 'Port for the Eleventy site (default: 8080)', '8080')
     .action(async (opts) => {
       const fs = (await import('fs')).default;
+      const port = opts.port;
       const siteDir = path.join(PROJECT_ROOT, '_site_src');
       if (!fs.existsSync(siteDir)) {
         console.log('⚠️  No generated form found. Run: adcgen generate\n');
@@ -315,27 +317,25 @@ export function createCli() {
         } catch { /* stale pid file */ }
       }
 
-      // Start data server
-      await startDataServer(dataDir);
-      const dataServerPid = process.pid;
-
-      // Start Eleventy detached
-      const eleventyLog = fs.openSync(path.join(PROJECT_ROOT, '.adcgen-eleventy.log'), 'w');
-      const eleventy = spawn('npx', ['@11ty/eleventy', '--serve', '--port=8080'], {
+      // Start both servers in a single detached child process
+      const logFile = path.join(PROJECT_ROOT, '.adcgen-server.log');
+      const logFd = fs.openSync(logFile, 'w');
+      const serveScript = path.join(PROJECT_ROOT, 'bin', 'adcgen-serve.js');
+      const child = spawn('node', [serveScript, '--port', port], {
         cwd: PROJECT_ROOT,
-        stdio: ['ignore', eleventyLog, eleventyLog],
-        shell: true,
-        detached: true
+        stdio: ['ignore', logFd, logFd],
+        detached: true,
+        env: { ...process.env }
       });
-      eleventy.unref();
+      child.unref();
 
-      // Save PIDs
-      fs.writeFileSync(pidFile, JSON.stringify([eleventy.pid, dataServerPid]));
+      // Save PID and port
+      fs.writeFileSync(pidFile, JSON.stringify({ pids: [child.pid], port }));
 
-      console.log('\n🚀 Servers started in background:');
-      console.log('  • Eleventy:    http://localhost:8080  (PID: ' + eleventy.pid + ')');
-      console.log('  • Data API:    http://localhost:3001  (PID: ' + dataServerPid + ')');
-      console.log('  • Logs:        .adcgen-eleventy.log');
+      console.log('\n🚀 Servers started in background (PID: ' + child.pid + '):');
+      console.log('  • Eleventy:    http://localhost:' + port);
+      console.log('  • Data API:    http://localhost:3001');
+      console.log('  • Logs:        .adcgen-server.log');
       console.log('\n  Use "adcgen stop" to shut down.\n');
 
       // Open browser
@@ -343,9 +343,12 @@ export function createCli() {
         setTimeout(async () => {
           try {
             const open = (await import('open')).default;
-            await open('http://localhost:8080/');
+            await open('http://localhost:' + port + '/');
           } catch { /* ignore */ }
+          process.exit(0);
         }, 3000);
+      } else {
+        process.exit(0);
       }
     });
 
@@ -360,7 +363,8 @@ export function createCli() {
         return;
       }
       try {
-        const pids = JSON.parse(fs.readFileSync(pidFile, 'utf-8'));
+        const raw = JSON.parse(fs.readFileSync(pidFile, 'utf-8'));
+        const pids = Array.isArray(raw) ? raw : (raw.pids || []);
         for (const pid of pids) {
           try {
             process.kill(-pid, 'SIGTERM');
@@ -372,6 +376,44 @@ export function createCli() {
         console.log('  👋 Servers stopped.\n');
       } catch (err) {
         console.log(`⚠️  Error stopping servers: ${err.message}\n`);
+      }
+    });
+
+  program
+    .command('ps')
+    .description('Show status of running adcgen servers')
+    .action(async () => {
+      const fs = (await import('fs')).default;
+      const pidFile = path.join(PROJECT_ROOT, '.adcgen.pid');
+      if (!fs.existsSync(pidFile)) {
+        console.log('\n  ⚪ No servers running.\n');
+        return;
+      }
+      try {
+        const raw = JSON.parse(fs.readFileSync(pidFile, 'utf-8'));
+        const pids = Array.isArray(raw) ? raw : (raw.pids || []);
+        const port = raw.port || '8080';
+        const statuses = pids.map(pid => {
+          try { process.kill(pid, 0); return { pid, alive: true }; }
+          catch { return { pid, alive: false }; }
+        });
+        const anyAlive = statuses.some(s => s.alive);
+        if (!anyAlive) {
+          fs.unlinkSync(pidFile);
+          console.log('\n  ⚪ No servers running (stale PID file cleaned).\n');
+          return;
+        }
+        console.log('\n  🟢 adcgen servers running:\n');
+        console.log(`     PID     Status`);
+        console.log(`     ──────  ──────`);
+        for (const s of statuses) {
+          console.log(`     ${String(s.pid).padEnd(6)}  ${s.alive ? '🟢 running' : '⚪ stopped'}`);
+        }
+        console.log(`\n     Eleventy:  http://localhost:${port}`);
+        console.log(`     Data API:  http://localhost:3001`);
+        console.log(`     Logs:      .adcgen-server.log\n`);
+      } catch (err) {
+        console.log(`⚠️  Error reading PID file: ${err.message}\n`);
       }
     });
 
