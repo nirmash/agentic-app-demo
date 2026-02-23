@@ -123,7 +123,8 @@ export function createCli() {
   program
     .command('launch')
     .description('Start Eleventy dev server and data API for the generated form')
-    .action(async () => {
+    .option('--no-open', 'Do not open the browser automatically')
+    .action(async (opts) => {
       const fs = (await import('fs')).default;
       const siteDir = path.join(PROJECT_ROOT, '_site_src');
       if (!fs.existsSync(siteDir)) {
@@ -156,17 +157,19 @@ export function createCli() {
         process.exit(1);
       });
 
-      // Open browser after a short delay
-      setTimeout(async () => {
-        try {
-          const open = (await import('open')).default;
-          const formUrl = `http://localhost:8080/`;
-          console.log(`\n  🌐 Opening ${formUrl}\n`);
-          await open(formUrl);
-        } catch {
-          // Silently fail if browser can't open
-        }
-      }, 3000);
+      // Open browser after a short delay (unless --no-open)
+      if (opts.open !== false) {
+        setTimeout(async () => {
+          try {
+            const open = (await import('open')).default;
+            const formUrl = `http://localhost:8080/`;
+            console.log(`\n  🌐 Opening ${formUrl}\n`);
+            await open(formUrl);
+          } catch {
+            // Silently fail if browser can't open
+          }
+        }, 3000);
+      }
 
       // Handle Ctrl+C
       process.on('SIGINT', () => {
@@ -174,6 +177,54 @@ export function createCli() {
         eleventy.kill();
         process.exit(0);
       });
+    });
+
+  program
+    .command('rm')
+    .description('Remove one or more generated forms by name')
+    .argument('<names...>', 'Form names to remove (space-separated)')
+    .action(async (names) => {
+      const fs = (await import('fs')).default;
+      const siteDir = path.join(PROJECT_ROOT, '_site_src');
+      if (!fs.existsSync(siteDir)) {
+        console.log('⚠️  No forms found. Nothing to remove.\n');
+        return;
+      }
+      for (const name of names) {
+        const file = path.join(siteDir, `${name}.html`);
+        if (fs.existsSync(file)) {
+          fs.unlinkSync(file);
+          console.log(`  🗑  Removed: ${name}`);
+        } else {
+          console.log(`  ⚠️  Not found: ${name}`);
+        }
+      }
+      // Regenerate index
+      const remaining = fs.readdirSync(siteDir).filter(f => f.endsWith('.html') && f !== 'index.html');
+      if (remaining.length > 0) {
+        const { generateIndexPage } = await import('./eleventy-builder.js');
+        generateIndexPage(siteDir);
+      } else {
+        // No forms left, clean up index too
+        const indexFile = path.join(siteDir, 'index.html');
+        if (fs.existsSync(indexFile)) fs.unlinkSync(indexFile);
+      }
+      console.log(`\n  📋 ${remaining.length} form${remaining.length !== 1 ? 's' : ''} remaining.\n`);
+    });
+
+  program
+    .command('clean')
+    .description('Delete all generated forms and site output')
+    .action(async () => {
+      const fs = (await import('fs')).default;
+      for (const dir of ['_site_src', '_site']) {
+        const target = path.join(PROJECT_ROOT, dir);
+        if (fs.existsSync(target)) {
+          fs.rmSync(target, { recursive: true });
+          console.log(`  🗑  Removed: ${dir}/`);
+        }
+      }
+      console.log('\n  ✅ All generated files cleaned.\n');
     });
 
   // Show help if no command given

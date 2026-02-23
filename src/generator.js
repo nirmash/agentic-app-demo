@@ -15,7 +15,7 @@ Return ONLY valid JSON (no markdown fences, no explanation) matching this schema
       "heading": "Section Title (markdown supported)",
       "fields": [
         {
-          "type": "text|dropdown|checkbox|radio|table|button",
+          "type": "text|password|dropdown|checkbox|radio|table|button",
           "label": "Field Label",
           "name": "field_name",
           "placeholder": "optional placeholder",
@@ -35,6 +35,7 @@ Return ONLY valid JSON (no markdown fences, no explanation) matching this schema
 }
 
 Rules:
+- Use "password" type for any password or secret fields (renders as masked input with toggle)
 - "options" is only for dropdown and radio types
 - "columns" and "initialRows" are only for table type
 - "events" can be on any field type. For buttons, always include a click event.

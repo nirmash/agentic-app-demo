@@ -23,6 +23,17 @@ ${indent}    <input class="form-control input-block" type="text" id="${id}" name
 ${indent}  </div>
 ${indent}</div>`;
 
+    case 'password':
+      return `${indent}<div class="form-group mb-3">
+${indent}  <div class="form-group-header">
+${indent}    <label class="FormControl-label" for="${id}">${escapeHtml(field.label)}${field.required ? ' <span class="color-fg-danger">*</span>' : ''}</label>
+${indent}  </div>
+${indent}  <div class="form-group-body position-relative">
+${indent}    <input class="form-control input-block" type="password" id="${id}" name="${id}" placeholder="${escapeHtml(field.placeholder || '')}"${req}>
+${indent}    <button type="button" class="btn-octicon position-absolute" style="right:8px;top:50%;transform:translateY(-50%)" onclick="const i=document.getElementById('${id}');const t=i.type==='password'?'text':'password';i.type=t;this.innerHTML=t==='password'?'👁':'👁‍🗨'" aria-label="Toggle password visibility">👁</button>
+${indent}  </div>
+${indent}</div>`;
+
     case 'dropdown':
       const opts = (field.options || []).map(o =>
         `${indent}      <option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`
@@ -164,19 +175,19 @@ function generateFormHtml(spec) {
   const eventScript = generateEventHandlerScript(spec);
 
   return `<!DOCTYPE html>
-<html lang="en" data-color-mode="auto" data-light-theme="light" data-dark-theme="dark">
+<html lang="en" data-color-mode="dark" data-dark-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${escapeHtml(spec.title)}</title>
   <link rel="stylesheet" href="https://unpkg.com/@primer/css@21.3.1/dist/primer.css">
   <style>
-    body { background-color: var(--bgColor-default, #f6f8fa); }
+    body { background-color: var(--bgColor-default, #0d1117); color: var(--fgColor-default, #e6edf3); }
     .form-container {
       max-width: 768px;
       margin: 2rem auto;
-      background: var(--bgColor-default, #fff);
-      border: 1px solid var(--borderColor-default, #d0d7de);
+      background: var(--bgColor-muted, #161b22);
+      border: 1px solid var(--borderColor-default, #30363d);
       border-radius: 6px;
       padding: 2rem;
     }
@@ -184,11 +195,11 @@ function generateFormHtml(spec) {
       text-align: center;
       padding-bottom: 1rem;
       margin-bottom: 1.5rem;
-      border-bottom: 1px solid var(--borderColor-default, #d0d7de);
+      border-bottom: 1px solid var(--borderColor-default, #30363d);
     }
     .table-bordered { border-collapse: collapse; }
-    .table-bordered th, .table-bordered td { border: 1px solid var(--borderColor-default, #d0d7de); }
-    .table-bordered input, .table-bordered select { border: none; width: 100%; background: transparent; }
+    .table-bordered th, .table-bordered td { border: 1px solid var(--borderColor-default, #30363d); }
+    .table-bordered input, .table-bordered select { border: none; width: 100%; background: transparent; color: inherit; }
     .toast-success {
       position: fixed; top: 1rem; right: 1rem;
       background: var(--bgColor-success-emphasis, #1a7f37);
@@ -304,14 +315,15 @@ export function buildEleventySite(spec, outputDir) {
 
   // Write Eleventy config
   const eleventyConfig = `export default function(eleventyConfig) {
-  eleventyConfig.addPassthroughCopy("**/*.css");
-  eleventyConfig.addPassthroughCopy("**/*.js");
+  eleventyConfig.setUseGitIgnore(false);
 
   return {
     dir: {
       input: "_site_src",
       output: "_site"
-    }
+    },
+    htmlTemplateEngine: false,
+    markdownTemplateEngine: false
   };
 };
 `;
@@ -326,7 +338,7 @@ export function buildEleventySite(spec, outputDir) {
   return { siteDir, fileName, dataDir };
 }
 
-function generateIndexPage(siteDir) {
+export function generateIndexPage(siteDir) {
   const forms = fs.readdirSync(siteDir)
     .filter(f => f.endsWith('.html') && f !== 'index.html')
     .map(f => {
@@ -346,17 +358,17 @@ function generateIndexPage(siteDir) {
   ).join('\n');
 
   const html = `<!DOCTYPE html>
-<html lang="en" data-color-mode="auto" data-light-theme="light" data-dark-theme="dark">
+<html lang="en" data-color-mode="dark" data-dark-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>adcgen — Forms</title>
   <link rel="stylesheet" href="https://unpkg.com/@primer/css@21.3.1/dist/primer.css">
   <style>
-    body { background-color: var(--bgColor-default, #f6f8fa); }
+    body { background-color: var(--bgColor-default, #0d1117); color: var(--fgColor-default, #e6edf3); }
     .container { max-width: 768px; margin: 2rem auto; }
     .Box-row a { text-decoration: none; padding: 12px 16px; }
-    .Box-row:hover { background: var(--bgColor-muted, #f6f8fa); }
+    .Box-row:hover { background: var(--bgColor-muted, #161b22); }
   </style>
 </head>
 <body>
