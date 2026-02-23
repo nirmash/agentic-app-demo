@@ -107,7 +107,7 @@ function generateEventAttributes(field) {
 
 function generateTableHtml(field, indent) {
   const cols = field.columns || [];
-  const rows = field.initialRows || 3;
+  const rows = field.initialRows || 1;
   const tableId = `table_${field.name}`;
   const colsData = escapeHtml(JSON.stringify(cols));
 
@@ -120,14 +120,15 @@ function generateTableHtml(field, indent) {
   for (let r = 0; r < rows; r++) {
     const cells = cols.map(c => {
       const cellName = `${field.name}_${c.name}_${r}`;
+      const req = c.required ? ' required' : '';
       switch (c.type) {
         case 'dropdown':
           const opts = (c.options || []).map(o => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join('');
-          return `${indent}        <td class="p-2"><select class="form-select" name="${cellName}"><option value="">Select...</option>${opts}</select></td>`;
+          return `${indent}        <td class="p-2"><select class="form-select" name="${cellName}"${req}><option value="">Select...</option>${opts}</select></td>`;
         case 'checkbox':
-          return `${indent}        <td class="p-2 text-center"><input type="checkbox" name="${cellName}"></td>`;
+          return `${indent}        <td class="p-2 text-center"><input type="checkbox" name="${cellName}"${req}></td>`;
         default:
-          return `${indent}        <td class="p-2"><input class="form-control" type="text" name="${cellName}" placeholder="${escapeHtml(c.header)}"></td>`;
+          return `${indent}        <td class="p-2"><input class="form-control" type="text" name="${cellName}" placeholder="${escapeHtml(c.header)}"${req}></td>`;
       }
     }).join('\n');
     const deleteBtn = `${indent}        <td class="p-2 text-center"><button type="button" class="btn-octicon color-fg-danger" onclick="deleteTableRow('${tableId}',this)" title="Delete row">✕</button></td>`;
@@ -267,16 +268,19 @@ ${sectionsHtml}
         if (c.type === 'dropdown') {
           const sel = document.createElement('select');
           sel.className = 'form-select'; sel.name = cellName;
+          if (c.required) sel.required = true;
           let optHtml = '<option value="">Select...</option>';
           (c.options || []).forEach(function(o) { optHtml += '<option value="' + o + '">' + o + '</option>'; });
           sel.innerHTML = optHtml; td.appendChild(sel);
         } else if (c.type === 'checkbox') {
           td.className = 'p-2 text-center';
           const cb = document.createElement('input'); cb.type = 'checkbox'; cb.name = cellName;
+          if (c.required) cb.required = true;
           td.appendChild(cb);
         } else {
           const inp = document.createElement('input'); inp.className = 'form-control';
           inp.type = 'text'; inp.name = cellName; inp.placeholder = c.header;
+          if (c.required) inp.required = true;
           td.appendChild(inp);
         }
         tr.appendChild(td);

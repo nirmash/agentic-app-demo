@@ -82,7 +82,7 @@ function renderTable(field) {
   lines.push(boxRow(' ' + ('─'.repeat(colWidth) + '┼').repeat(cols.length)));
 
   // Sample rows
-  const rowCount = field.initialRows || 2;
+  const rowCount = field.initialRows || 1;
   for (let r = 0; r < Math.min(rowCount, 3); r++) {
     let row = ' ';
     for (const col of cols) {

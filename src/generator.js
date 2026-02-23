@@ -47,7 +47,9 @@ Rules:
 - Always include a submit button at the end unless the user says otherwise
 - IMPORTANT: The form element always has id="main-form". Any handler that submits the form MUST use: document.getElementById('main-form').requestSubmit()
 - NEVER reference any other form ID in handlers. The only form ID is "main-form".
-- For tables, generate "Add Row" button event handlers that clone table rows
+- DO NOT generate "Add Row" or "Delete Row" buttons or event handlers for tables — the system adds those automatically.
+- Table columns can have "required": true to mark them as required. Example column: { "header": "Email", "type": "text", "name": "email", "required": true }
+- Set "initialRows" to 1 for tables (the user can add more rows with the built-in Add Row button)
 - Be creative but practical with the form design`;
 
 export async function generateFormSpec(userPrompt) {
@@ -99,10 +101,28 @@ export async function generateFormSpec(userPrompt) {
   }
 }
 
-// Fix any event handlers that reference wrong form IDs
+// Fix any event handlers that reference wrong form IDs and strip auto-managed table buttons
 function sanitizeHandlers(spec) {
   for (const section of spec.sections || []) {
+    // Remove LLM-generated "Add Row" / "Delete Row" buttons (we add those automatically)
+    section.fields = (section.fields || []).filter(field => {
+      if (field.type === 'button') {
+        const label = (field.label || '').toLowerCase();
+        if (label.includes('add row') || label.includes('delete row') || label.includes('remove row')) {
+          return false;
+        }
+      }
+      return true;
+    });
+
     for (const field of section.fields || []) {
+      // Strip table-row add/delete events from table fields
+      if (field.type === 'table' && field.events) {
+        field.events = field.events.filter(evt => {
+          const desc = (evt.description || '').toLowerCase();
+          return !desc.includes('add') || !desc.includes('row');
+        });
+      }
       if (!field.events) continue;
       for (const evt of field.events) {
         if (evt.handler) {
@@ -122,7 +142,9 @@ Apply the requested change and return the COMPLETE updated JSON specification.
 
 Return ONLY valid JSON (no markdown fences, no explanation). Keep the same schema structure. Preserve all existing fields and settings that are not affected by the change. The form element always has id="main-form" — any handler that submits the form MUST use: document.getElementById('main-form').requestSubmit()
 
-For links to other pages, use type "link" with "href" set to "/<page_name>/" and "label" for the link text.`;
+For links to other pages, use type "link" with "href" set to "/<page_name>/" and "label" for the link text.
+DO NOT generate "Add Row" or "Delete Row" buttons or event handlers for tables — the system adds those automatically.
+Table columns can have "required": true. Set "initialRows" to 1 for tables.`;
 
 const EDIT_HTML_PROMPT = `You are an HTML form editor. You are given an existing HTML page and a user's requested change.
 
