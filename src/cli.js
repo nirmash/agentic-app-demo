@@ -232,12 +232,14 @@ export function createCli() {
       const currentSpec = hasSpec ? JSON.parse(fs.readFileSync(specFile, 'utf-8')) : null;
 
       // Detect if HTML was manually modified (differs from what spec would generate)
+      // Normalize by stripping SESSION_ID and trailing whitespace for comparison
       let useHtmlMode = !hasSpec;
       if (hasSpec) {
         const { generateFormHtml } = await import('./eleventy-builder.js');
         if (typeof generateFormHtml === 'function') {
+          const normalize = (html) => html.replace(/SESSION_ID\s*=\s*'[^']*'/, 'SESSION_ID').replace(/\s+$/gm, '');
           const specHtml = generateFormHtml(currentSpec);
-          useHtmlMode = currentHtml.trim() !== specHtml.trim();
+          useHtmlMode = normalize(currentHtml) !== normalize(specHtml);
         }
       }
 
