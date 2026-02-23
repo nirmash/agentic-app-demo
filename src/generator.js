@@ -49,7 +49,10 @@ Rules:
 - NEVER reference any other form ID in handlers. The only form ID is "main-form".
 - DO NOT generate "Add Row" or "Delete Row" buttons or event handlers for tables — the system adds those automatically.
 - Table columns can have "required": true to mark them as required. Example column: { "header": "Email", "type": "text", "name": "email", "required": true }
-- Table columns can have type "calculated" for auto-computed readonly fields. Set "formula" using {column_name} placeholders that reference other column names in the same table, e.g. { "header": "Full Name", "type": "calculated", "name": "full_name", "formula": "{first_name} {last_name}" }. Calculated columns update automatically when other columns change. Do NOT use events for this — the system handles it.
+- Table columns can have type "calculated" for auto-computed readonly fields. Two formula modes:
+  * Template: use {column_name} placeholders for simple concatenation, e.g. "formula": "{first_name} {last_name}"
+  * Expression: prefix with = for JavaScript expressions where column names are variables, e.g. "formula": "=email.split('@')[0]" or "formula": "=first_name.toUpperCase()"
+  Calculated columns update automatically when other columns change. Do NOT use events for this — the system handles it.
 - Set "initialRows" to 1 for tables (the user can add more rows with the built-in Add Row button)
 - Be creative but practical with the form design`;
 
@@ -146,7 +149,7 @@ Return ONLY valid JSON (no markdown fences, no explanation). Keep the same schem
 For links to other pages, use type "link" with "href" set to "/<page_name>/" and "label" for the link text.
 DO NOT generate "Add Row" or "Delete Row" buttons or event handlers for tables — the system adds those automatically.
 Table columns can have "required": true. Set "initialRows" to 1 for tables.
-Table columns can have type "calculated" with a "formula" using {column_name} placeholders, e.g. { "type": "calculated", "name": "full_name", "formula": "{first_name} {last_name}" }. Do NOT use events for calculated columns.`;
+Table columns can have type "calculated" with a "formula" — use {col} placeholders for concatenation or prefix with = for JS expressions (e.g. "=email.split('@')[0]"). Do NOT use events for calculated columns.`;
 
 const EDIT_HTML_PROMPT = `You are an HTML form editor. You are given an existing HTML page and a user's requested change.
 

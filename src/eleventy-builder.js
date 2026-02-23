@@ -324,7 +324,20 @@ ${sectionsHtml}
       columns.forEach(function(c) {
         if (c.type !== 'calculated' || !c.formula) return;
         const el = tr.querySelector('[name="' + fieldName + '_' + c.name + '_' + rowIdx + '"]');
-        if (el) el.value = c.formula.replace(/\{(\w+)\}/g, function(m, name) { return vals[name] || ''; });
+        if (!el) return;
+        try {
+          var formula = c.formula;
+          if (formula.startsWith('=')) {
+            // Expression mode: JS expression with column names as variables
+            var keys = Object.keys(vals);
+            var fn = new Function(keys.join(','), 'return ' + formula.substring(1));
+            var result = fn.apply(null, keys.map(function(k) { return vals[k]; }));
+            el.value = (result == null ? '' : result);
+          } else {
+            // Template mode: replace {col_name} placeholders
+            el.value = formula.replace(/\{(\w+)\}/g, function(m, name) { return vals[name] || ''; });
+          }
+        } catch(e) { el.value = ''; }
       });
     }
 
