@@ -179,22 +179,23 @@ The generated HTML has clearly marked zones:
 
 ### ADC Sandbox (or any Linux server with Node 20+)
 
-A single script handles everything — clone, install, build, and serve on port 80:
+A single script handles everything — clone, install, link CLI globally, build, and optionally serve:
 
 ```bash
 # On the sandbox / server:
-bash deploy.sh
+bash deploy.sh              # Setup only — adcgen CLI is available after this
+bash deploy.sh --serve      # Setup + start web server on port 80
 
 # Custom port:
-PORT=3000 bash deploy.sh
+bash deploy.sh --serve --port 3000
 ```
 
 The deploy script:
 1. Clones (or updates) the repo to `/app`
-2. Installs production dependencies
+2. Installs dependencies and runs `npm link` so `adcgen` is in PATH
 3. Builds all forms from `_data/*_spec.json` specs (or the demo test form if none exist)
 4. Patches API URLs for same-origin serving (no separate API port needed)
-5. Starts a combined static + API server on the specified port
+5. With `--serve`: starts a combined static + API server on the specified port
 
 **Key files:**
 - `deploy.sh` — Orchestrates the full deployment

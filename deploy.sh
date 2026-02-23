@@ -1,22 +1,24 @@
 #!/bin/bash
 # deploy.sh — Deploy adcgen to an ADC sandbox (or any Linux server with Node 20+).
-# Clones the repo, installs deps, builds the site, generates sample forms,
-# fixes API URLs for same-origin serving, and starts on port 80.
+# Clones the repo, installs deps, links the CLI globally, builds the site,
+# and optionally starts the production server.
 #
 # Usage:
-#   On the sandbox:  bash deploy.sh
-#   With forms:      bash deploy.sh --forms "form1 form2"
-#   Custom port:     bash deploy.sh --port 3000
+#   On the sandbox:  bash deploy.sh           # setup only (use adcgen CLI after)
+#                    bash deploy.sh --serve    # setup + start server on port 80
+#   Custom port:     bash deploy.sh --serve --port 3000
 set -e
 
 PORT="${PORT:-80}"
 APP_DIR="/app"
 REPO="https://github.com/nirmash/agentic-app-demo.git"
+SERVE=false
 
 # Parse args
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --port) PORT="$2"; shift 2 ;;
+    --serve) SERVE=true; shift ;;
     *) shift ;;
   esac
 done
@@ -34,9 +36,11 @@ else
   cd "$APP_DIR"
 fi
 
-# Install dependencies
+# Install dependencies and link CLI globally
 echo "  Installing dependencies..."
-npm install --production --quiet 2>/dev/null
+npm install --quiet 2>/dev/null
+npm link --quiet 2>/dev/null
+echo "  ✅ adcgen CLI linked globally"
 
 # Build site from any existing specs
 echo "  Building site..."
@@ -69,7 +73,14 @@ npx @11ty/eleventy --quiet 2>/dev/null
 find _site -name '*.html' -exec sed -i 's|http://localhost:3001/api/|/api/|g' {} +
 echo "  API URLs patched for same-origin"
 
-# Start server
 echo ""
-echo "🚀 Starting adcgen on port $PORT..."
-exec node bin/deploy-server.js --port "$PORT"
+echo "✅ adcgen deployed to $APP_DIR"
+echo "   Run 'adcgen' to see all commands"
+
+if [ "$SERVE" = true ]; then
+  echo ""
+  echo "🚀 Starting adcgen on port $PORT..."
+  exec node bin/deploy-server.js --port "$PORT"
+else
+  echo "   Run 'bash deploy.sh --serve' to start the web server on port $PORT"
+fi
