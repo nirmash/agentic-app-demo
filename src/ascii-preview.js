@@ -86,7 +86,7 @@ function renderTable(field) {
   for (let r = 0; r < Math.min(rowCount, 3); r++) {
     let row = ' ';
     for (const col of cols) {
-      const placeholder = col.type === 'checkbox' ? '☐' : col.type === 'dropdown' ? '▼ ...' : '___';
+      const placeholder = col.type === 'checkbox' ? '☐' : col.type === 'dropdown' ? '▼ ...' : col.type === 'calculated' ? '=calc' : '___';
       row += placeholder.padEnd(colWidth) + '│';
     }
     row = row.substring(0, WIDTH - 3) + ' ✕';

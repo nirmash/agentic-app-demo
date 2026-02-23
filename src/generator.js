@@ -23,7 +23,7 @@ Return ONLY valid JSON (no markdown fences, no explanation) matching this schema
           "options": ["opt1", "opt2"],
           "href": "/page_name/",
           "columns": [
-            { "header": "Col Name", "type": "text|dropdown|checkbox", "name": "col_name", "options": [] }
+            { "header": "Col Name", "type": "text|dropdown|checkbox|calculated", "name": "col_name", "options": [], "formula": "{col1} {col2}" }
           ],
           "initialRows": 3,
           "events": [
@@ -49,6 +49,7 @@ Rules:
 - NEVER reference any other form ID in handlers. The only form ID is "main-form".
 - DO NOT generate "Add Row" or "Delete Row" buttons or event handlers for tables — the system adds those automatically.
 - Table columns can have "required": true to mark them as required. Example column: { "header": "Email", "type": "text", "name": "email", "required": true }
+- Table columns can have type "calculated" for auto-computed readonly fields. Set "formula" using {column_name} placeholders that reference other column names in the same table, e.g. { "header": "Full Name", "type": "calculated", "name": "full_name", "formula": "{first_name} {last_name}" }. Calculated columns update automatically when other columns change. Do NOT use events for this — the system handles it.
 - Set "initialRows" to 1 for tables (the user can add more rows with the built-in Add Row button)
 - Be creative but practical with the form design`;
 
@@ -144,7 +145,8 @@ Return ONLY valid JSON (no markdown fences, no explanation). Keep the same schem
 
 For links to other pages, use type "link" with "href" set to "/<page_name>/" and "label" for the link text.
 DO NOT generate "Add Row" or "Delete Row" buttons or event handlers for tables — the system adds those automatically.
-Table columns can have "required": true. Set "initialRows" to 1 for tables.`;
+Table columns can have "required": true. Set "initialRows" to 1 for tables.
+Table columns can have type "calculated" with a "formula" using {column_name} placeholders, e.g. { "type": "calculated", "name": "full_name", "formula": "{first_name} {last_name}" }. Do NOT use events for calculated columns.`;
 
 const EDIT_HTML_PROMPT = `You are an HTML form editor. You are given an existing HTML page and a user's requested change.
 

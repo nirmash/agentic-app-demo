@@ -127,6 +127,8 @@ function generateTableHtml(field, indent) {
           return `${indent}        <td class="p-2"><select class="form-select" name="${cellName}"${req}><option value="">Select...</option>${opts}</select></td>`;
         case 'checkbox':
           return `${indent}        <td class="p-2 text-center"><input type="checkbox" name="${cellName}"${req}></td>`;
+        case 'calculated':
+          return `${indent}        <td class="p-2"><input class="form-control" type="text" name="${cellName}" readonly tabindex="-1" style="background:var(--bgColor-muted,#161b22);color:var(--fgColor-muted,#848d97)"></td>`;
         default:
           return `${indent}        <td class="p-2"><input class="form-control" type="text" name="${cellName}" placeholder="${escapeHtml(c.header)}"${req}></td>`;
       }
@@ -277,6 +279,11 @@ ${sectionsHtml}
           const cb = document.createElement('input'); cb.type = 'checkbox'; cb.name = cellName;
           if (c.required) cb.required = true;
           td.appendChild(cb);
+        } else if (c.type === 'calculated') {
+          const inp = document.createElement('input'); inp.className = 'form-control';
+          inp.type = 'text'; inp.name = cellName; inp.readOnly = true; inp.tabIndex = -1;
+          inp.style.cssText = 'background:var(--bgColor-muted,#161b22);color:var(--fgColor-muted,#848d97)';
+          td.appendChild(inp);
         } else {
           const inp = document.createElement('input'); inp.className = 'form-control';
           inp.type = 'text'; inp.name = cellName; inp.placeholder = c.header;
@@ -302,6 +309,38 @@ ${sectionsHtml}
       if (tbody.rows.length <= 1) return;
       btn.closest('tr').remove();
     }
+
+    // Recalculate computed columns in a table row
+    function recalcRow(table, tr) {
+      const fieldName = table.dataset.fieldName;
+      const columns = JSON.parse(table.dataset.columns);
+      const rowIdx = tr.dataset.row;
+      const vals = {};
+      columns.forEach(function(c) {
+        if (c.type === 'calculated') return;
+        const el = tr.querySelector('[name="' + fieldName + '_' + c.name + '_' + rowIdx + '"]');
+        if (el) vals[c.name] = el.type === 'checkbox' ? (el.checked ? 'Yes' : 'No') : (el.value || '');
+      });
+      columns.forEach(function(c) {
+        if (c.type !== 'calculated' || !c.formula) return;
+        const el = tr.querySelector('[name="' + fieldName + '_' + c.name + '_' + rowIdx + '"]');
+        if (el) el.value = c.formula.replace(/\{(\w+)\}/g, function(m, name) { return vals[name] || ''; });
+      });
+    }
+
+    // Wire up input event delegation on tables with calculated columns
+    document.querySelectorAll('table[data-field-name]').forEach(function(table) {
+      var columns = JSON.parse(table.dataset.columns);
+      if (!columns.some(function(c) { return c.type === 'calculated'; })) return;
+      table.addEventListener('input', function(e) {
+        var tr = e.target.closest('tr');
+        if (tr) recalcRow(table, tr);
+      });
+      table.addEventListener('change', function(e) {
+        var tr = e.target.closest('tr');
+        if (tr) recalcRow(table, tr);
+      });
+    });
 
     // Populate form fields from a data object
     function populateForm(data) {
@@ -365,7 +404,17 @@ ${sectionsHtml}
     if (loadId) {
       fetch('http://localhost:3001/api/load?formName=' + FORM_NAME + '&id=' + loadId)
         .then(r => r.ok ? r.json() : null)
-        .then(result => { if (result && result.data) populateForm(result.data); })
+        .then(result => {
+          if (result && result.data) {
+            populateForm(result.data);
+            // Recalculate computed columns after loading
+            document.querySelectorAll('table[data-field-name]').forEach(function(table) {
+              var cols = JSON.parse(table.dataset.columns);
+              if (!cols.some(function(c) { return c.type === 'calculated'; })) return;
+              table.querySelectorAll('tbody tr').forEach(function(tr) { recalcRow(table, tr); });
+            });
+          }
+        })
         .catch(() => {});
     }
 
