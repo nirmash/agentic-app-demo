@@ -108,10 +108,13 @@ function generateEventAttributes(field) {
 function generateTableHtml(field, indent) {
   const cols = field.columns || [];
   const rows = field.initialRows || 3;
+  const tableId = `table_${field.name}`;
+  const colsData = escapeHtml(JSON.stringify(cols));
 
   let header = cols.map(c =>
     `${indent}        <th class="p-2">${escapeHtml(c.header)}</th>`
   ).join('\n');
+  header += `\n${indent}        <th class="p-2" style="width:40px"></th>`;
 
   let bodyRows = '';
   for (let r = 0; r < rows; r++) {
@@ -120,20 +123,21 @@ function generateTableHtml(field, indent) {
       switch (c.type) {
         case 'dropdown':
           const opts = (c.options || []).map(o => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join('');
-          return `${indent}        <td class="p-2"><select class="form-select" name="${cellName}""><option value="">Select...</option>${opts}</select></td>`;
+          return `${indent}        <td class="p-2"><select class="form-select" name="${cellName}"><option value="">Select...</option>${opts}</select></td>`;
         case 'checkbox':
           return `${indent}        <td class="p-2 text-center"><input type="checkbox" name="${cellName}"></td>`;
         default:
           return `${indent}        <td class="p-2"><input class="form-control" type="text" name="${cellName}" placeholder="${escapeHtml(c.header)}"></td>`;
       }
     }).join('\n');
-    bodyRows += `${indent}      <tr data-row="${r}">\n${cells}\n${indent}      </tr>\n`;
+    const deleteBtn = `${indent}        <td class="p-2 text-center"><button type="button" class="btn-octicon color-fg-danger" onclick="deleteTableRow('${tableId}',this)" title="Delete row">✕</button></td>`;
+    bodyRows += `${indent}      <tr data-row="${r}">\n${cells}\n${deleteBtn}\n${indent}      </tr>\n`;
   }
 
   return `${indent}<div class="mb-3">
 ${indent}  <label class="FormControl-label">${escapeHtml(field.label)}</label>
 ${indent}  <div class="overflow-auto">
-${indent}    <table class="table-bordered width-full" id="table_${field.name}">
+${indent}    <table class="table-bordered width-full" id="${tableId}" data-field-name="${field.name}" data-columns="${colsData}" data-row-count="${rows}">
 ${indent}      <thead class="color-bg-subtle">
 ${indent}        <tr>
 ${header}
@@ -142,6 +146,9 @@ ${indent}      </thead>
 ${indent}      <tbody>
 ${bodyRows}${indent}      </tbody>
 ${indent}    </table>
+${indent}  </div>
+${indent}  <div class="mt-2">
+${indent}    <button type="button" class="btn btn-sm" onclick="addTableRow('${tableId}')">+ Add Row</button>
 ${indent}  </div>
 ${indent}</div>`;
 }
@@ -244,6 +251,54 @@ ${sectionsHtml}
     const loadId = urlParams.get('id');
     if (loadId) SESSION_ID = loadId;
 
+    // Table row management
+    function addTableRow(tableId) {
+      const table = document.getElementById(tableId);
+      const tbody = table.querySelector('tbody');
+      const fieldName = table.dataset.fieldName;
+      const columns = JSON.parse(table.dataset.columns);
+      const r = parseInt(table.dataset.rowCount);
+      const tr = document.createElement('tr');
+      tr.dataset.row = r;
+      columns.forEach(function(c) {
+        const td = document.createElement('td');
+        td.className = 'p-2';
+        const cellName = fieldName + '_' + c.name + '_' + r;
+        if (c.type === 'dropdown') {
+          const sel = document.createElement('select');
+          sel.className = 'form-select'; sel.name = cellName;
+          let optHtml = '<option value="">Select...</option>';
+          (c.options || []).forEach(function(o) { optHtml += '<option value="' + o + '">' + o + '</option>'; });
+          sel.innerHTML = optHtml; td.appendChild(sel);
+        } else if (c.type === 'checkbox') {
+          td.className = 'p-2 text-center';
+          const cb = document.createElement('input'); cb.type = 'checkbox'; cb.name = cellName;
+          td.appendChild(cb);
+        } else {
+          const inp = document.createElement('input'); inp.className = 'form-control';
+          inp.type = 'text'; inp.name = cellName; inp.placeholder = c.header;
+          td.appendChild(inp);
+        }
+        tr.appendChild(td);
+      });
+      const delTd = document.createElement('td');
+      delTd.className = 'p-2 text-center';
+      const delBtn = document.createElement('button');
+      delBtn.type = 'button'; delBtn.className = 'btn-octicon color-fg-danger';
+      delBtn.title = 'Delete row'; delBtn.textContent = '\\u2715';
+      delBtn.onclick = function() { deleteTableRow(tableId, this); };
+      delTd.appendChild(delBtn); tr.appendChild(delTd);
+      tbody.appendChild(tr);
+      table.dataset.rowCount = r + 1;
+    }
+
+    function deleteTableRow(tableId, btn) {
+      const table = document.getElementById(tableId);
+      const tbody = table.querySelector('tbody');
+      if (tbody.rows.length <= 1) return;
+      btn.closest('tr').remove();
+    }
+
     // Populate form fields from a data object
     function populateForm(data) {
       const form = document.getElementById('main-form');
@@ -252,18 +307,33 @@ ${sectionsHtml}
 
         // Handle table data (arrays of objects)
         if (Array.isArray(value)) {
-          value.forEach((row, rowIdx) => {
-            if (row && typeof row === 'object') {
-              for (const [col, cellVal] of Object.entries(row)) {
-                const cellName = key + '_' + col + '_' + rowIdx;
-                const el = form.querySelector('[name="' + cellName + '"]');
-                if (el) {
-                  if (el.type === 'checkbox') el.checked = !!cellVal;
-                  else el.value = cellVal;
+          const tableEl = document.querySelector('table[data-field-name="' + key + '"]');
+          if (tableEl) {
+            const tbody = tableEl.querySelector('tbody');
+            // Clear existing rows and reset counter
+            while (tbody.rows.length > 0) tbody.deleteRow(0);
+            tableEl.dataset.rowCount = 0;
+            // Filter out null entries from sparse arrays
+            const dataRows = value.filter(function(r) { return r != null; });
+            // Add the right number of rows
+            for (let i = 0; i < Math.max(dataRows.length, 1); i++) {
+              addTableRow(tableEl.id);
+            }
+            // Populate cells positionally
+            const rows = tbody.rows;
+            dataRows.forEach(function(row, idx) {
+              if (row && typeof row === 'object' && idx < rows.length) {
+                for (const [col, cellVal] of Object.entries(row)) {
+                  const cellName = key + '_' + col + '_' + idx;
+                  const el = rows[idx].querySelector('[name="' + cellName + '"]');
+                  if (el) {
+                    if (el.type === 'checkbox') el.checked = !!cellVal;
+                    else el.value = cellVal;
+                  }
                 }
               }
-            }
-          });
+            });
+          }
           continue;
         }
 
@@ -328,6 +398,13 @@ ${sectionsHtml}
           data[name] = false;
         }
       });
+
+      // Compact sparse table arrays (from deleted rows)
+      for (const k of Object.keys(data)) {
+        if (Array.isArray(data[k])) {
+          data[k] = data[k].filter(function(r) { return r != null; });
+        }
+      }
 
       return data;
     }

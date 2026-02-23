@@ -89,8 +89,10 @@ function renderTable(field) {
       const placeholder = col.type === 'checkbox' ? '☐' : col.type === 'dropdown' ? '▼ ...' : '___';
       row += placeholder.padEnd(colWidth) + '│';
     }
+    row = row.substring(0, WIDTH - 3) + ' ✕';
     lines.push(boxRow(row));
   }
+  lines.push(boxRow('  [ + Add Row ]'));
   return lines;
 }
 
