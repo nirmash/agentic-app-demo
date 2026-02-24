@@ -54,7 +54,8 @@ if [ -x "$NPM_BIN/adcgen" ]; then
   echo "  ✅ adcgen installed successfully!"
   echo ""
   echo "  Installed to: $INSTALL_DIR"
-  echo "  Binary:       $NPM_BIN/adcgen"
+  echo "  Binaries:     $NPM_BIN/adcgen"
+  echo "                $NPM_BIN/adc"
   echo ""
 
   # Check PATH
@@ -87,6 +88,7 @@ if [ -x "$NPM_BIN/adcgen" ]; then
   echo "    adcgen login       # Authenticate with GitHub"
   echo "    adcgen generate    # Create a form"
   echo "    adcgen launch      # Start the dev server"
+  echo "    adc config set apiKey <key>  # Configure ADC MCP client"
   echo ""
 else
   echo ""

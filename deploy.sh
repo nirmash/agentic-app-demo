@@ -86,7 +86,7 @@ npx @11ty/eleventy --quiet 2>/dev/null
 
 echo ""
 echo "✅ adcgen deployed to $APP_DIR"
-echo "   Run 'adcgen' to see all commands"
+echo "   Run 'adcgen' or 'adc' to see all commands"
 
 if [ "$SERVE" = true ]; then
   echo ""
