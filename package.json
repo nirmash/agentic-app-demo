@@ -4,7 +4,8 @@
   "description": "CLI tool that generates HTML forms using Eleventy and GitHub Copilot",
   "type": "module",
   "bin": {
-    "adcgen": "./bin/adcgen.js"
+    "adcgen": "./bin/adcgen.js",
+    "adc": "./bin/adc.js"
   },
   "scripts": {
     "start": "node bin/adcgen.js",

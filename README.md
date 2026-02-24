@@ -114,13 +114,64 @@ adcgen launch
 | `adcgen rebuild` | Rebuild all forms from saved specs (picks up latest features) |
 | `adcgen clean` | Delete all generated forms and site output |
 
+## ADC CLI — MCP Client
+
+A standalone CLI (`adc`) for interacting with Azure Dev Compute sandboxes via the MCP protocol.
+
+### Setup
+
+```bash
+# Config is stored in ~/.adcgen/adc-config.json
+adc --config    # Creates default config; edit to add your API key
+```
+
+Config file (`~/.adcgen/adc-config.json`):
+```json
+{
+  "endpoint": "https://management.azuredevcompute.io/mcp/sse",
+  "apiKey": "your-api-key-here"
+}
+```
+
+### Usage
+
+```bash
+adc <sandbox_id> <command> [payload]    # Execute an MCP command
+adc - <command> [payload]               # Commands that don't need a sandbox ID
+adc --list-commands                     # List all available commands
+```
+
+### Examples
+
+```bash
+# List available disk images
+adc - list_disk_images
+
+# Create a sandbox
+adc - create_sandbox '{"diskImageId":"abc-123","cpuMillicores":2000}'
+
+# Run a command
+adc abc-123 execute_command "ls -la /app"
+
+# Expose a port
+adc abc-123 add_port '{"port":80,"anonymous":true}'
+
+# Payload from a file
+echo '{"port":80}' > params.json
+adc abc-123 add_port params.json
+
+# Delete a sandbox
+adc abc-123 delete_sandbox
+```
+
 ## Project Structure
 
 ```
 ├── bin/
 │   ├── adcgen.js              # CLI entry point
 │   ├── adcgen-serve.js        # Background server process (Eleventy + data API)
-│   └── deploy-server.js       # Production server (static + API on single port)
+│   ├── deploy-server.js       # Production server (static + API on single port)
+│   └── adc.js                 # ADC MCP client CLI
 ├── src/
 │   ├── cli.js                 # Commander setup & command routing
 │   ├── auth.js                # GitHub auth (gh CLI / manual token)
