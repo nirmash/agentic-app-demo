@@ -121,17 +121,17 @@ A standalone CLI (`adc`) for interacting with Azure Dev Compute sandboxes via th
 ### Setup
 
 ```bash
-# Config is stored in ~/.adcgen/adc-config.json
-adc --config    # Creates default config; edit to add your API key
+# Set your API key
+adc config set apiKey your-api-key-here
+
+# Optionally change the endpoint
+adc config set endpoint https://management.azuredevcompute.io/mcp/sse
+
+# View current config (API key is masked)
+adc config get
 ```
 
-Config file (`~/.adcgen/adc-config.json`):
-```json
-{
-  "endpoint": "https://management.azuredevcompute.io/mcp/sse",
-  "apiKey": "your-api-key-here"
-}
-```
+Config file: `~/.adcgen/adc-config.json`
 
 ### Usage
 
@@ -144,7 +144,11 @@ adc --list-commands                     # List all available commands
 ### Examples
 
 ```bash
-# List available disk images
+# Configure
+adc config set apiKey your-api-key-here
+adc config get
+
+# List disk images
 adc - list_disk_images
 
 # Create a sandbox

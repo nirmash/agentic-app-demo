@@ -174,8 +174,11 @@ adc — MCP client for Azure Dev Compute
 Usage:
   adc <sandbox_id> <command> [payload]    Execute an MCP command
   adc - <command> [payload]               Command that doesn't need a sandbox ID
+  adc config get                          Show current configuration
+  adc config set <key> <value>            Set a config value
   adc --list-commands                     List all available commands
-  adc --config                            Show config file location and contents
+
+Config keys: endpoint, apiKey
 
 Payload:
   • JSON string:  '{"diskImageId":"abc-123","cpuMillicores":2000}'
@@ -183,6 +186,9 @@ Payload:
   • Plain string: "ls -la /app"  (mapped to the first required param)
 
 Examples:
+  adc config set apiKey your-api-key-here
+  adc config set endpoint https://management.azuredevcompute.io/mcp/sse
+  adc config get
   adc - list_disk_images
   adc - create_sandbox '{"diskImageId":"abc-123"}'
   adc abc-123 execute_command "ls -la /app"
@@ -218,16 +224,44 @@ async function main() {
     process.exit(0);
   }
 
-  if (args.includes('--config')) {
-    const config = loadConfig();
-    if (!fs.existsSync(CONFIG_FILE)) {
-      saveConfig(config);
-      console.log(`Created config: ${CONFIG_FILE}`);
-    } else {
-      console.log(`Config: ${CONFIG_FILE}`);
+  // config get / config set
+  if (args[0] === 'config') {
+    const sub = args[1];
+    if (sub === 'get') {
+      const config = loadConfig();
+      if (!fs.existsSync(CONFIG_FILE)) {
+        saveConfig(config);
+        console.log(`Created config: ${CONFIG_FILE}`);
+      }
+      console.log(`Config: ${CONFIG_FILE}\n`);
+      // Mask apiKey for display
+      const display = { ...config };
+      if (display.apiKey) display.apiKey = display.apiKey.substring(0, 8) + '...' + display.apiKey.slice(-4);
+      console.log(JSON.stringify(display, null, 2));
+      process.exit(0);
     }
-    console.log(JSON.stringify(config, null, 2));
-    process.exit(0);
+    if (sub === 'set') {
+      const key = args[2];
+      const value = args.slice(3).join(' ');
+      if (!key || !value) {
+        console.error('Usage: adc config set <key> <value>');
+        console.error('Keys: endpoint, apiKey');
+        process.exit(1);
+      }
+      const config = loadConfig();
+      if (!(key in DEFAULT_CONFIG)) {
+        console.error(`❌ Unknown config key: ${key}`);
+        console.error(`   Valid keys: ${Object.keys(DEFAULT_CONFIG).join(', ')}`);
+        process.exit(1);
+      }
+      config[key] = value;
+      saveConfig(config);
+      const displayVal = key === 'apiKey' ? value.substring(0, 8) + '...' + value.slice(-4) : value;
+      console.log(`✅ ${key} = ${displayVal}`);
+      process.exit(0);
+    }
+    console.error('Usage: adc config get | adc config set <key> <value>');
+    process.exit(1);
   }
 
   if (args.length < 2) {
