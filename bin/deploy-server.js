@@ -7,6 +7,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { v4 as uuidv4 } from 'uuid';
+import { syncToDb, resolveSpecPath } from '../src/db-sync.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -26,6 +27,15 @@ app.post('/api/save', (req, res) => {
   const fileName = `${formName || 'form'}_${sessionId || uuidv4().split('-')[0]}.json`;
   fs.writeFileSync(path.join(DATA_DIR, fileName), JSON.stringify(data, null, 2));
   console.log(`  💾 Saved: ${fileName}`);
+
+  // Sync to Postgres if DATABASE_URL is set
+  const specPath = resolveSpecPath(DATA_DIR, formName);
+  if (formName && fs.existsSync(specPath)) {
+    syncToDb(formName, data, specPath).catch(err =>
+      console.error(`  ⚠️  DB sync failed: ${err.message}`)
+    );
+  }
+
   res.json({ ok: true, file: fileName });
 });
 

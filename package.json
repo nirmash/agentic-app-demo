@@ -13,7 +13,12 @@
     "serve": "npx @11ty/eleventy --serve",
     "test": "node --test test/*.test.js"
   },
-  "keywords": ["form-generator", "eleventy", "copilot", "cli"],
+  "keywords": [
+    "form-generator",
+    "eleventy",
+    "copilot",
+    "cli"
+  ],
   "license": "MIT",
   "dependencies": {
     "@11ty/eleventy": "^3.0.0",
@@ -23,6 +28,7 @@
     "inquirer": "^9.2.0",
     "node-fetch": "^3.3.0",
     "open": "^10.0.0",
+    "pg": "^8.19.0",
     "uuid": "^9.0.0"
   }
 }

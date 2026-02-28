@@ -2,6 +2,7 @@ import express from 'express';
 import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import { syncToDb, resolveSpecPath } from './db-sync.js';
 
 export function startDataServer(dataDir, port = 3001) {
   const app = express();
@@ -25,6 +26,15 @@ export function startDataServer(dataDir, port = 3001) {
 
     fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
     console.log(`  💾 Saved: ${filePath}`);
+
+    // Sync to Postgres if DATABASE_URL is set
+    const specPath = resolveSpecPath(dataDir, formName);
+    if (formName && fs.existsSync(specPath)) {
+      syncToDb(formName, data, specPath).catch(err =>
+        console.error(`  ⚠️  DB sync failed: ${err.message}`)
+      );
+    }
+
     res.json({ ok: true, file: fileName });
   });
 
