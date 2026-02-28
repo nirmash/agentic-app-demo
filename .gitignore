@@ -1,7 +1,7 @@
 node_modules/
-_site/
-_site_src/
-_data/
 .adcgen.pid
 .adcgen-server.log
 .adcgen-eleventy.log
+# Ignore user data files but track spec files
+_data/*.json
+!_data/*_spec.json

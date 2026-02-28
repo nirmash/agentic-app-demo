@@ -1,0 +1,62 @@
+{
+  "title": "Login Form",
+  "formName": "login",
+  "sections": [
+    {
+      "heading": "User Login",
+      "fields": [
+        {
+          "type": "text",
+          "label": "Username",
+          "name": "username",
+          "placeholder": "Enter your username",
+          "required": true,
+          "options": [],
+          "columns": [],
+          "initialRows": 0,
+          "events": []
+        },
+        {
+          "type": "password",
+          "label": "Password",
+          "name": "password",
+          "placeholder": "Enter your password",
+          "required": true,
+          "options": [],
+          "columns": [],
+          "initialRows": 0,
+          "events": []
+        },
+        {
+          "type": "link",
+          "label": "Add User",
+          "name": "add_user",
+          "url": "/add_user",
+          "placeholder": "",
+          "required": false,
+          "options": [],
+          "columns": [],
+          "initialRows": 0,
+          "events": []
+        },
+        {
+          "type": "button",
+          "label": "Login",
+          "name": "login_button",
+          "placeholder": "",
+          "required": false,
+          "options": [],
+          "columns": [],
+          "initialRows": 0,
+          "events": [
+            {
+              "event": "click",
+              "description": "Submit the login form",
+              "handler": "document.getElementById('main-form').requestSubmit()"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

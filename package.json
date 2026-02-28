@@ -9,7 +9,7 @@
   },
   "scripts": {
     "start": "node bin/adcgen.js",
-    "build": "npx @11ty/eleventy",
+    "build": "test -d _site_src && npx @11ty/eleventy || echo 'Skipping eleventy: _site_src not found'",
     "serve": "npx @11ty/eleventy --serve",
     "test": "node --test test/*.test.js"
   },

@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en" data-color-mode="dark" data-dark-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact Entry Form</title>
+  <link rel="stylesheet" href="https://unpkg.com/@primer/css@21.3.1/dist/primer.css">
+  <!-- ⚠️ DO NOT EDIT: Styles managed by adcgen -->
+  <style>
+    body { background-color: var(--bgColor-default, #0d1117); color: var(--fgColor-default, #e6edf3); }
+    .form-container {
+      max-width: 768px;
+      margin: 2rem auto;
+      background: var(--bgColor-muted, #161b22);
+      border: 1px solid var(--borderColor-default, #30363d);
+      border-radius: 6px;
+      padding: 2rem;
+    }
+    .form-header {
+      text-align: center;
+      padding-bottom: 1rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--borderColor-default, #30363d);
+    }
+    .table-bordered { border-collapse: collapse; }
+    .table-bordered th, .table-bordered td { border: 1px solid var(--borderColor-default, #30363d); }
+    .table-bordered input, .table-bordered select { border: none; width: 100%; background: transparent; color: inherit; }
+    .toast-success {
+      position: fixed; top: 1rem; right: 1rem;
+      background: var(--bgColor-success-emphasis, #1a7f37);
+      color: white; padding: 0.75rem 1.5rem; border-radius: 6px;
+      display: none; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+  </style>
+  <!-- END DO NOT EDIT -->
+</head>
+<body>
+  <div class="toast-success" id="toast">✓ Data saved successfully!</div>
+
+  <div class="form-container">
+    <div class="form-header">
+      <h1 class="h2">Contact Entry Form</h1>
+    </div>
+
+    <!-- You may add text, headings, and links around sections. Do NOT edit form fields — use "adcgen edit" instead. -->
+    <form id="main-form">
+
+      <!-- ✅ SAFE TO EDIT: Section headings, text, and links -->
+      <h3 class="h3 mb-3 pb-2 border-bottom">New Contact Information</h3>
+      <!-- END SAFE TO EDIT -->
+      <!-- ⚠️ DO NOT EDIT: Form fields managed by adcgen. Use "adcgen edit" to change. -->
+      <div class="mb-3">
+        <label class="FormControl-label">Contacts</label>
+        <div class="overflow-auto">
+          <table class="table-bordered width-full" id="table_contacts_table" data-field-name="contacts_table" data-columns="[{&quot;header&quot;:&quot;First Name&quot;,&quot;type&quot;:&quot;text&quot;,&quot;name&quot;:&quot;first_name&quot;,&quot;required&quot;:true},{&quot;header&quot;:&quot;Last Name&quot;,&quot;type&quot;:&quot;text&quot;,&quot;name&quot;:&quot;last_name&quot;,&quot;required&quot;:true},{&quot;header&quot;:&quot;Email&quot;,&quot;type&quot;:&quot;text&quot;,&quot;name&quot;:&quot;email&quot;,&quot;required&quot;:true},{&quot;header&quot;:&quot;Handle&quot;,&quot;type&quot;:&quot;calculated&quot;,&quot;name&quot;:&quot;handle&quot;,&quot;formula&quot;:&quot;='@' + email.split('@')[0]&quot;}]" data-row-count="1">
+            <thead class="color-bg-subtle">
+              <tr>
+              <th class="p-2">First Name</th>
+              <th class="p-2">Last Name</th>
+              <th class="p-2">Email</th>
+              <th class="p-2">Handle</th>
+              <th class="p-2" style="width:40px"></th>
+              </tr>
+            </thead>
+            <tbody>
+            <tr data-row="0">
+              <td class="p-2"><input class="form-control" type="text" name="contacts_table_first_name_0" placeholder="First Name" required></td>
+              <td class="p-2"><input class="form-control" type="text" name="contacts_table_last_name_0" placeholder="Last Name" required></td>
+              <td class="p-2"><input class="form-control" type="text" name="contacts_table_email_0" placeholder="Email" required></td>
+              <td class="p-2"><input class="form-control" type="text" name="contacts_table_handle_0" readonly tabindex="-1" style="background:var(--bgColor-muted,#161b22);color:var(--fgColor-muted,#848d97)"></td>
+              <td class="p-2 text-center"><button type="button" class="btn-octicon color-fg-danger" onclick="deleteTableRow('table_contacts_table',this)" title="Delete row">✕</button></td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="mt-2">
+          <button type="button" class="btn btn-sm" onclick="addTableRow('table_contacts_table')">+ Add Row</button>
+        </div>
+      </div>
+      <div class="form-actions mb-3">
+        <button type="button" class="btn btn-primary" id="submit_button">Submit</button>
+      </div>
+      <!-- END DO NOT EDIT -->
+
+    </form>
+  </div>
+
+  <!-- ⚠️ DO NOT EDIT: Form submission and data loading scripts managed by adcgen -->
+  <script>
+    const FORM_NAME = 'contacts';
+    let SESSION_ID = 'bb828aa9';
+
+    // Check URL for ?id= param to load existing data
+    const urlParams = new URLSearchParams(window.location.search);
+    const loadId = urlParams.get('id');
+    if (loadId) SESSION_ID = loadId;
+
+    // Table row management
+    function addTableRow(tableId) {
+      const table = document.getElementById(tableId);
+      const tbody = table.querySelector('tbody');
+      const fieldName = table.dataset.fieldName;
+      const columns = JSON.parse(table.dataset.columns);
+      const r = parseInt(table.dataset.rowCount);
+      const tr = document.createElement('tr');
+      tr.dataset.row = r;
+      columns.forEach(function(c) {
+        const td = document.createElement('td');
+        td.className = 'p-2';
+        const cellName = fieldName + '_' + c.name + '_' + r;
+        if (c.type === 'dropdown') {
+          const sel = document.createElement('select');
+          sel.className = 'form-select'; sel.name = cellName;
+          if (c.required) sel.required = true;
+          let optHtml = '<option value="">Select...</option>';
+          (c.options || []).forEach(function(o) { optHtml += '<option value="' + o + '">' + o + '</option>'; });
+          sel.innerHTML = optHtml; td.appendChild(sel);
+        } else if (c.type === 'checkbox') {
+          td.className = 'p-2 text-center';
+          const cb = document.createElement('input'); cb.type = 'checkbox'; cb.name = cellName;
+          if (c.required) cb.required = true;
+          td.appendChild(cb);
+        } else if (c.type === 'calculated') {
+          const inp = document.createElement('input'); inp.className = 'form-control';
+          inp.type = 'text'; inp.name = cellName; inp.readOnly = true; inp.tabIndex = -1;
+          inp.style.cssText = 'background:var(--bgColor-muted,#161b22);color:var(--fgColor-muted,#848d97)';
+          td.appendChild(inp);
+        } else {
+          const inp = document.createElement('input'); inp.className = 'form-control';
+          inp.type = 'text'; inp.name = cellName; inp.placeholder = c.header;
+          if (c.required) inp.required = true;
+          td.appendChild(inp);
+        }
+        tr.appendChild(td);
+      });
+      const delTd = document.createElement('td');
+      delTd.className = 'p-2 text-center';
+      const delBtn = document.createElement('button');
+      delBtn.type = 'button'; delBtn.className = 'btn-octicon color-fg-danger';
+      delBtn.title = 'Delete row'; delBtn.textContent = '\u2715';
+      delBtn.onclick = function() { deleteTableRow(tableId, this); };
+      delTd.appendChild(delBtn); tr.appendChild(delTd);
+      tbody.appendChild(tr);
+      table.dataset.rowCount = r + 1;
+    }
+
+    function deleteTableRow(tableId, btn) {
+      const table = document.getElementById(tableId);
+      const tbody = table.querySelector('tbody');
+      if (tbody.rows.length <= 1) return;
+      btn.closest('tr').remove();
+    }
+
+    // Recalculate computed columns in a table row
+    function recalcRow(table, tr) {
+      const fieldName = table.dataset.fieldName;
+      const columns = JSON.parse(table.dataset.columns);
+      const rowIdx = tr.dataset.row;
+      const vals = {};
+      columns.forEach(function(c) {
+        if (c.type === 'calculated') return;
+        const el = tr.querySelector('[name="' + fieldName + '_' + c.name + '_' + rowIdx + '"]');
+        if (el) vals[c.name] = el.type === 'checkbox' ? (el.checked ? 'Yes' : 'No') : (el.value || '');
+      });
+      columns.forEach(function(c) {
+        if (c.type !== 'calculated' || !c.formula) return;
+        const el = tr.querySelector('[name="' + fieldName + '_' + c.name + '_' + rowIdx + '"]');
+        if (!el) return;
+        try {
+          var formula = c.formula;
+          if (formula.startsWith('=')) {
+            // Expression mode: JS expression with column names as variables
+            var keys = Object.keys(vals);
+            var fn = new Function(keys.join(','), 'return ' + formula.substring(1));
+            var result = fn.apply(null, keys.map(function(k) { return vals[k]; }));
+            el.value = (result == null ? '' : result);
+          } else {
+            // Template mode: replace {col_name} placeholders
+            el.value = formula.replace(/{(w+)}/g, function(m, name) { return vals[name] || ''; });
+          }
+        } catch(e) { el.value = ''; }
+      });
+    }
+
+    // Wire up input event delegation on tables with calculated columns
+    document.querySelectorAll('table[data-field-name]').forEach(function(table) {
+      var columns = JSON.parse(table.dataset.columns);
+      if (!columns.some(function(c) { return c.type === 'calculated'; })) return;
+      table.addEventListener('input', function(e) {
+        var tr = e.target.closest('tr');
+        if (tr) recalcRow(table, tr);
+      });
+      table.addEventListener('change', function(e) {
+        var tr = e.target.closest('tr');
+        if (tr) recalcRow(table, tr);
+      });
+    });
+
+    // Populate form fields from a data object
+    function populateForm(data) {
+      const form = document.getElementById('main-form');
+      for (const [key, value] of Object.entries(data)) {
+        if (key === '_meta') continue;
+
+        // Handle table data (arrays of objects)
+        if (Array.isArray(value)) {
+          const tableEl = document.querySelector('table[data-field-name="' + key + '"]');
+          if (tableEl) {
+            const tbody = tableEl.querySelector('tbody');
+            // Clear existing rows and reset counter
+            while (tbody.rows.length > 0) tbody.deleteRow(0);
+            tableEl.dataset.rowCount = 0;
+            // Filter out null entries from sparse arrays
+            const dataRows = value.filter(function(r) { return r != null; });
+            // Add the right number of rows
+            for (let i = 0; i < Math.max(dataRows.length, 1); i++) {
+              addTableRow(tableEl.id);
+            }
+            // Populate cells positionally
+            const rows = tbody.rows;
+            dataRows.forEach(function(row, idx) {
+              if (row && typeof row === 'object' && idx < rows.length) {
+                for (const [col, cellVal] of Object.entries(row)) {
+                  const cellName = key + '_' + col + '_' + idx;
+                  const el = rows[idx].querySelector('[name="' + cellName + '"]');
+                  if (el) {
+                    if (el.type === 'checkbox') el.checked = !!cellVal;
+                    else el.value = cellVal;
+                  }
+                }
+              }
+            });
+          }
+          continue;
+        }
+
+        const elements = form.querySelectorAll('[name="' + key + '"]');
+        if (elements.length === 0) continue;
+
+        const el = elements[0];
+        if (el.type === 'checkbox') {
+          if (elements.length > 1) {
+            // Multi-checkbox: value is array
+            const vals = Array.isArray(value) ? value : [value];
+            elements.forEach(cb => { cb.checked = vals.includes(cb.value); });
+          } else {
+            el.checked = value === true || value === 'on' || value === el.value;
+          }
+        } else if (el.type === 'radio') {
+          elements.forEach(r => { r.checked = r.value === value; });
+        } else {
+          el.value = value;
+        }
+      }
+    }
+
+    // Load existing data if ?id= is present
+    if (loadId) {
+      fetch('http://localhost:3001/api/load?formName=' + FORM_NAME + '&id=' + loadId)
+        .then(r => r.ok ? r.json() : null)
+        .then(result => {
+          if (result && result.data) {
+            populateForm(result.data);
+            // Recalculate computed columns after loading
+            document.querySelectorAll('table[data-field-name]').forEach(function(table) {
+              var cols = JSON.parse(table.dataset.columns);
+              if (!cols.some(function(c) { return c.type === 'calculated'; })) return;
+              table.querySelectorAll('tbody tr').forEach(function(tr) { recalcRow(table, tr); });
+            });
+          }
+        })
+        .catch(() => {});
+    }
+
+    // Collect all form data including tables
+    function collectFormData() {
+      const form = document.getElementById('main-form');
+      const data = {};
+      const formData = new FormData(form);
+
+      for (const [key, value] of formData.entries()) {
+        // Handle table fields: fieldname_colname_rowindex
+        const tableMatch = key.match(/^(.+?)_(.+?)_(\d+)$/);
+        if (tableMatch) {
+          const [, table, col, row] = tableMatch;
+          if (!data[table]) data[table] = [];
+          if (!data[table][parseInt(row)]) data[table][parseInt(row)] = {};
+          data[table][parseInt(row)][col] = value;
+          continue;
+        }
+
+        // Handle checkboxes with multiple values
+        if (data[key] !== undefined) {
+          if (!Array.isArray(data[key])) data[key] = [data[key]];
+          data[key].push(value);
+        } else {
+          data[key] = value;
+        }
+      }
+
+      // Also collect unchecked checkboxes
+      form.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        const name = cb.name;
+        if (!formData.has(name)) {
+          data[name] = false;
+        }
+      });
+
+      // Compact sparse table arrays (from deleted rows)
+      for (const k of Object.keys(data)) {
+        if (Array.isArray(data[k])) {
+          data[k] = data[k].filter(function(r) { return r != null; });
+        }
+      }
+
+      return data;
+    }
+
+    // Form submission → save JSON via local API
+    document.getElementById('main-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const data = collectFormData();
+      data._meta = {
+        formName: FORM_NAME,
+        sessionId: SESSION_ID,
+        submittedAt: new Date().toISOString()
+      };
+
+      try {
+        const res = await fetch('http://localhost:3001/api/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ formName: FORM_NAME, sessionId: SESSION_ID, data })
+        });
+        if (res.ok) {
+          const toast = document.getElementById('toast');
+          toast.style.display = 'block';
+          setTimeout(() => toast.style.display = 'none', 3000);
+        } else {
+          alert('Failed to save data. Is the adcgen server running?');
+        }
+      } catch (err) {
+        alert('Could not connect to save server. Is the adcgen server running?');
+      }
+    });
+
+    // Custom event handlers
+  // Submit: Submit the form data
+  document.getElementById('submit_button')?.addEventListener('click', function(e) {
+    document.getElementById('main-form').requestSubmit();
+  });
+  </script>
+  <!-- END DO NOT EDIT -->
+</body>
+</html>

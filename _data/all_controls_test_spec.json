@@ -1,0 +1,170 @@
+{
+  "title": "All Controls Test Form",
+  "formName": "all_controls_test",
+  "sections": [
+    {
+      "heading": "Text & Password Fields",
+      "fields": [
+        {
+          "type": "text",
+          "label": "Full Name",
+          "name": "full_name",
+          "placeholder": "Enter your name",
+          "required": true
+        },
+        {
+          "type": "text",
+          "label": "Email Address",
+          "name": "email",
+          "placeholder": "user@example.com",
+          "required": true
+        },
+        {
+          "type": "password",
+          "label": "Password",
+          "name": "password",
+          "placeholder": "Enter password",
+          "required": true
+        }
+      ]
+    },
+    {
+      "heading": "Selection Controls",
+      "fields": [
+        {
+          "type": "dropdown",
+          "label": "Country",
+          "name": "country",
+          "options": [
+            "USA",
+            "Canada",
+            "UK",
+            "Germany",
+            "Japan"
+          ],
+          "required": true
+        },
+        {
+          "type": "checkbox",
+          "label": "Interests",
+          "name": "interests",
+          "options": [
+            "Sports",
+            "Music",
+            "Technology",
+            "Travel"
+          ]
+        },
+        {
+          "type": "checkbox",
+          "label": "Agree to Terms",
+          "name": "agree_terms",
+          "required": true
+        },
+        {
+          "type": "radio",
+          "label": "Preferred Contact Method",
+          "name": "contact_method",
+          "options": [
+            "Email",
+            "Phone",
+            "SMS"
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Table with Mixed Controls",
+      "fields": [
+        {
+          "type": "table",
+          "label": "Team Members",
+          "name": "team_members",
+          "columns": [
+            {
+              "header": "First Name",
+              "name": "first_name",
+              "type": "text",
+              "required": true
+            },
+            {
+              "header": "Last Name",
+              "name": "last_name",
+              "type": "text",
+              "required": true
+            },
+            {
+              "header": "Full Name",
+              "name": "full_name",
+              "type": "calculated",
+              "formula": "{first_name} {last_name}"
+            },
+            {
+              "header": "Email",
+              "name": "email",
+              "type": "text"
+            },
+            {
+              "header": "Handle",
+              "name": "handle",
+              "type": "calculated",
+              "formula": "='@' + email.split('@')[0]"
+            },
+            {
+              "header": "Role",
+              "name": "role",
+              "type": "dropdown",
+              "options": [
+                "Developer",
+                "Designer",
+                "Manager",
+                "QA"
+              ]
+            },
+            {
+              "header": "Active",
+              "name": "active",
+              "type": "checkbox"
+            }
+          ],
+          "initialRows": 1
+        }
+      ]
+    },
+    {
+      "heading": "Navigation & Actions",
+      "fields": [
+        {
+          "type": "link",
+          "label": "Go to Login Page",
+          "name": "login_link",
+          "href": "/login/"
+        },
+        {
+          "type": "button",
+          "label": "Validate",
+          "name": "validate_btn",
+          "events": [
+            {
+              "event": "click",
+              "description": "Validate all required fields",
+              "handler": "const form = document.getElementById('main-form'); if (form.checkValidity()) { alert('All fields valid!'); } else { form.reportValidity(); }"
+            }
+          ]
+        },
+        {
+          "type": "button",
+          "label": "Submit",
+          "name": "submit_btn",
+          "events": [
+            {
+              "event": "click",
+              "description": "Submit the form",
+              "handler": "document.getElementById('main-form').requestSubmit();"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

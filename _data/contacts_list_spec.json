@@ -1,0 +1,74 @@
+{
+  "title": "Add Contact Information",
+  "formName": "contacts_list",
+  "sections": [
+    {
+      "heading": "Contact Details",
+      "fields": [
+        {
+          "type": "table",
+          "label": "Contact Information",
+          "name": "contact_table",
+          "columns": [
+            {
+              "header": "First Name",
+              "type": "text",
+              "name": "first_name",
+              "options": []
+            },
+            {
+              "header": "Last Name",
+              "type": "text",
+              "name": "last_name",
+              "options": []
+            },
+            {
+              "header": "Email",
+              "type": "text",
+              "name": "email",
+              "options": []
+            },
+            {
+              "header": "Notes",
+              "type": "text",
+              "name": "notes",
+              "options": []
+            }
+          ],
+          "initialRows": 3,
+          "events": [
+            {
+              "event": "click",
+              "description": "Add a new row to the table",
+              "handler": "const table = document.querySelector('[name=\"contact_table\"] tbody'); const firstRow = table.querySelector('tr'); const newRow = firstRow.cloneNode(true); newRow.querySelectorAll('input').forEach(input => input.value = ''); table.appendChild(newRow);"
+            }
+          ]
+        },
+        {
+          "type": "button",
+          "label": "Add Row",
+          "name": "add_row_button",
+          "events": [
+            {
+              "event": "click",
+              "description": "Add a new row to the table",
+              "handler": "const table = document.querySelector('[name=\"contact_table\"] tbody'); const firstRow = table.querySelector('tr'); const newRow = firstRow.cloneNode(true); newRow.querySelectorAll('input').forEach(input => input.value = ''); table.appendChild(newRow);"
+            }
+          ]
+        },
+        {
+          "type": "button",
+          "label": "Submit",
+          "name": "submit_button",
+          "events": [
+            {
+              "event": "click",
+              "description": "Submit the form",
+              "handler": "document.getElementById('main-form').requestSubmit();"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
