@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en" data-color-mode="dark" data-dark-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Database Explorer</title>
+  <link rel="stylesheet" href="https://unpkg.com/@primer/css@21.3.1/dist/primer.css">
+  <style>
+    body { background-color: var(--bgColor-default, #0d1117); color: var(--fgColor-default, #e6edf3); }
+    .container { max-width: 960px; margin: 2rem auto; padding: 0 1rem; }
+    .query-box {
+      width: 100%;
+      min-height: 80px;
+      background: var(--bgColor-muted, #161b22);
+      color: var(--fgColor-default, #e6edf3);
+      border: 1px solid var(--borderColor-default, #30363d);
+      border-radius: 6px;
+      padding: 0.75rem;
+      font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+      font-size: 14px;
+      resize: vertical;
+    }
+    .query-box:focus { outline: none; border-color: var(--color-accent-fg, #2f81f7); box-shadow: 0 0 0 3px rgba(47,129,247,0.3); }
+    .results-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .results-table th, .results-table td {
+      border: 1px solid var(--borderColor-default, #30363d);
+      padding: 6px 10px;
+      text-align: left;
+      white-space: nowrap;
+      max-width: 300px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .results-table th { background: var(--bgColor-muted, #161b22); font-weight: 600; position: sticky; top: 0; }
+    .results-table tr:hover td { background: rgba(47,129,247,0.08); }
+    .results-wrap { max-height: 500px; overflow: auto; border: 1px solid var(--borderColor-default, #30363d); border-radius: 6px; }
+    .sidebar-table { cursor: pointer; }
+    .sidebar-table:hover { color: var(--color-accent-fg, #2f81f7); }
+    .sidebar-table.active { color: var(--color-accent-fg, #2f81f7); font-weight: 600; }
+    .error-msg { color: var(--fgColor-danger, #f85149); font-family: monospace; }
+    .status-bar { font-size: 13px; color: var(--fgColor-muted, #8b949e); }
+    .keyboard-hint { font-size: 12px; color: var(--fgColor-muted, #8b949e); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="Subhead mb-3">
+      <h1 class="Subhead-heading">🗄️ Database Explorer</h1>
+      <div class="Subhead-description"><a href="/" class="Link">← Back to forms</a></div>
+    </div>
+
+    <div class="d-flex flex-column flex-md-row" style="gap: 1rem;">
+      <!-- Sidebar: tables -->
+      <div class="col-md-3">
+        <div class="Box">
+          <div class="Box-header"><h3 class="Box-title">Tables</h3></div>
+          <div id="tables-list" class="Box-body p-2">
+            <span class="color-fg-muted">Loading...</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main: query + results -->
+      <div class="col-md-9 flex-auto">
+        <div class="mb-2">
+          <textarea id="sql-input" class="query-box" placeholder="SELECT * FROM ..." spellcheck="false">SELECT tablename FROM pg_tables WHERE schemaname = 'public'</textarea>
+        </div>
+        <div class="d-flex flex-items-center mb-3" style="gap: 0.5rem;">
+          <button id="run-btn" class="btn btn-primary btn-sm">▶ Run Query</button>
+          <span class="keyboard-hint">Ctrl+Enter to run</span>
+          <span id="status" class="status-bar flex-auto text-right"></span>
+        </div>
+        <div id="results"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const sqlInput = document.getElementById('sql-input');
+    const runBtn = document.getElementById('run-btn');
+    const resultsDiv = document.getElementById('results');
+    const statusEl = document.getElementById('status');
+    const tablesList = document.getElementById('tables-list');
+
+    // Load tables sidebar
+    async function loadTables() {
+      try {
+        const res = await fetch('/api/db/tables');
+        const data = await res.json();
+        if (!data.ok) { tablesList.textContent = data.error; return; }
+        if (data.tables.length === 0) {
+          tablesList.innerHTML = '<span class="color-fg-muted">No tables yet</span>';
+          return;
+        }
+        tablesList.innerHTML = data.tables.map(t =>
+          `<div class="sidebar-table p-1" data-table="${t}">📊 ${t}</div>`
+        ).join('');
+        tablesList.querySelectorAll('.sidebar-table').forEach(el => {
+          el.addEventListener('click', () => {
+            tablesList.querySelectorAll('.sidebar-table').forEach(e => e.classList.remove('active'));
+            el.classList.add('active');
+            sqlInput.value = `SELECT * FROM "${el.dataset.table}" LIMIT 50`;
+            runQuery();
+          });
+        });
+      } catch (err) {
+        tablesList.innerHTML = `<span class="error-msg">${err.message}</span>`;
+      }
+    }
+
+    // Run query
+    async function runQuery() {
+      const sql = sqlInput.value.trim();
+      if (!sql) return;
+      runBtn.disabled = true;
+      statusEl.textContent = 'Running...';
+      resultsDiv.innerHTML = '';
+      const t0 = performance.now();
+      try {
+        const res = await fetch('/api/db/query', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sql })
+        });
+        const data = await res.json();
+        const ms = Math.round(performance.now() - t0);
+        if (!data.ok) {
+          resultsDiv.innerHTML = `<div class="flash flash-error p-3"><pre class="error-msg m-0">${escHtml(data.error)}</pre></div>`;
+          statusEl.textContent = `Error (${ms}ms)`;
+          return;
+        }
+        if (!data.rows || data.rows.length === 0) {
+          resultsDiv.innerHTML = '<div class="flash p-3">Query OK — no rows returned</div>';
+          statusEl.textContent = `${data.rowCount ?? 0} row(s) affected (${ms}ms)`;
+          return;
+        }
+        const cols = Object.keys(data.rows[0]);
+        const header = cols.map(c => `<th>${escHtml(c)}</th>`).join('');
+        const rows = data.rows.map(r =>
+          '<tr>' + cols.map(c => `<td title="${escHtml(String(r[c] ?? ''))}">${escHtml(String(r[c] ?? 'NULL'))}</td>`).join('') + '</tr>'
+        ).join('');
+        resultsDiv.innerHTML = `<div class="results-wrap"><table class="results-table"><thead><tr>${header}</tr></thead><tbody>${rows}</tbody></table></div>`;
+        statusEl.textContent = `${data.rows.length} row(s) returned (${ms}ms)`;
+      } catch (err) {
+        resultsDiv.innerHTML = `<div class="flash flash-error p-3"><pre class="error-msg m-0">${escHtml(err.message)}</pre></div>`;
+        statusEl.textContent = 'Connection error';
+      } finally {
+        runBtn.disabled = false;
+      }
+    }
+
+    function escHtml(s) {
+      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    runBtn.addEventListener('click', runQuery);
+    sqlInput.addEventListener('keydown', e => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); runQuery(); }
+    });
+
+    loadTables();
+  </script>
+</body>
+</html>

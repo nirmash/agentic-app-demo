@@ -52,6 +52,45 @@ app.get('/api/load', (req, res) => {
   }
 });
 
+// API: database explorer
+if (process.env.DATABASE_URL) {
+  const { pool } = await import('../src/db.js');
+
+  app.get('/api/db/tables', async (req, res) => {
+    try {
+      const result = await pool.query(
+        `SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename`
+      );
+      res.json({ ok: true, tables: result.rows.map(r => r.tablename) });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get('/api/db/describe/:table', async (req, res) => {
+    try {
+      const result = await pool.query(
+        `SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_name = $1 ORDER BY ordinal_position`,
+        [req.params.table]
+      );
+      res.json({ ok: true, columns: result.rows });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post('/api/db/query', async (req, res) => {
+    const { sql } = req.body;
+    if (!sql) return res.status(400).json({ error: 'No sql provided' });
+    try {
+      const result = await pool.query(sql);
+      res.json({ ok: true, rows: result.rows, rowCount: result.rowCount });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+}
+
 // Static files
 app.use(express.static(SITE_DIR));
 
