@@ -356,7 +356,7 @@
 
     // Load existing data if ?id= is present
     if (loadId) {
-      fetch('http://localhost:3001/api/load?formName=' + FORM_NAME + '&id=' + loadId)
+      fetch('/api/load?formName=' + FORM_NAME + '&id=' + loadId)
         .then(r => r.ok ? r.json() : null)
         .then(result => {
           if (result && result.data) {
@@ -427,7 +427,7 @@
       };
 
       try {
-        const res = await fetch('http://localhost:3001/api/save', {
+        const res = await fetch('/api/save', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ formName: FORM_NAME, sessionId: SESSION_ID, data })
