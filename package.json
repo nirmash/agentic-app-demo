@@ -10,6 +10,7 @@
   "scripts": {
     "start": "node bin/adcgen.js",
     "build": "test -d _site_src && npx @11ty/eleventy || echo 'Skipping eleventy: _site_src not found'",
+    "postinstall": "mkdir -p node_modules/.bin && ln -sf ../../bin/adcgen.js node_modules/.bin/adcgen && ln -sf ../../bin/adc.js node_modules/.bin/adc",
     "serve": "npx @11ty/eleventy --serve",
     "test": "node --test test/*.test.js"
   },
