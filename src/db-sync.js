@@ -49,6 +49,9 @@ async function createTables(formName, spec) {
 
   // Child tables for table-type fields
   for (const child of childTables) {
+    // Avoid redundant prefix: if field name already starts with formName, don't double it
+    const childSuffix = child.name.startsWith(formName + '_') ? child.name.slice(formName.length + 1) : child.name;
+    const childTableName = `${formName}_${childSuffix}`;
     const childCols = [
       'id SERIAL PRIMARY KEY',
       `session_id TEXT REFERENCES "${formName}"(session_id) ON DELETE CASCADE`,
@@ -56,7 +59,7 @@ async function createTables(formName, spec) {
       ...child.columns.map(c => `"${c}" TEXT`),
     ];
     await pool.query(
-      `CREATE TABLE IF NOT EXISTS "${formName}_${child.name}" (${childCols.join(', ')})`
+      `CREATE TABLE IF NOT EXISTS "${childTableName}" (${childCols.join(', ')})`
     );
   }
 }
@@ -122,7 +125,8 @@ export async function syncToDb(formName, data, specPath) {
     if (!Array.isArray(rows)) continue;
 
     // Delete old rows for this session, then insert fresh
-    const childTable = `${formName}_${child.name}`;
+    const childSuffix = child.name.startsWith(formName + '_') ? child.name.slice(formName.length + 1) : child.name;
+    const childTable = `${formName}_${childSuffix}`;
     await pool.query(
       `DELETE FROM "${childTable}" WHERE session_id = $1`,
       [sessionId]
@@ -163,7 +167,10 @@ export async function dropFormTables(formName, specPath) {
     try {
       const spec = JSON.parse(fs.readFileSync(specPath, 'utf-8'));
       const { childTables } = schemaFromSpec(spec);
-      childNames = childTables.map(c => `${formName}_${c.name}`);
+      childNames = childTables.map(c => {
+        const suffix = c.name.startsWith(formName + '_') ? c.name.slice(formName.length + 1) : c.name;
+        return `${formName}_${suffix}`;
+      });
     } catch {}
   }
 
