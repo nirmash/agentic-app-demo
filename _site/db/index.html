@@ -307,6 +307,107 @@
       checkAuth();
     }
 
+    // LLM config for browser-side calls
+    const LLM_ENDPOINT = 'https://models.inference.ai.azure.com/chat/completions';
+    const LLM_MODEL = 'gpt-4o';
+
+    async function getAuthToken() {
+      const res = await fetch('/api/cli/token');
+      const data = await res.json();
+      return data.ok ? data.token : null;
+    }
+
+    async function callLLM(systemPrompt, userPrompt, token) {
+      const res = await fetch(LLM_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: LLM_MODEL, messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }], temperature: 0.7, max_tokens: 4000 })
+      });
+      if (!res.ok) throw new Error(`LLM API error (${res.status}): ${await res.text()}`);
+      const data = await res.json();
+      const content = data.choices?.[0]?.message?.content;
+      if (!content) throw new Error('No response from LLM');
+      return content.replace(/^```(?:json|html)?\n?/m, '').replace(/\n?```$/m, '').trim();
+    }
+
+    // Handle generate command browser-side (LLM call from browser, save on server)
+    async function handleGenerate(args) {
+      // Parse: adcgen generate <name> <description...>
+      const name = args[0];
+      const description = args.slice(1).join(' ');
+      if (!name) { cliOutput.innerHTML += `<span style="color:#f85149;">Usage: adcgen generate &lt;form_name&gt; &lt;description&gt;</span>\n`; return; }
+      if (!description) { cliOutput.innerHTML += `<span style="color:#f85149;">Please provide a form description after the name.</span>\n`; return; }
+
+      const formName = name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+      cliOutput.innerHTML += `<span style="color:#8b949e;">⏳ Generating form "${formName}"...</span>\n`;
+      cliOutput.scrollTop = cliOutput.scrollHeight;
+
+      const token = await getAuthToken();
+      if (!token) { cliOutput.innerHTML += `<span style="color:#f85149;">Not logged in. Use the login panel above.</span>\n`; return; }
+
+      try {
+        const raw = await callLLM(GENERATE_SYSTEM_PROMPT, description, token);
+        const spec = JSON.parse(raw);
+        spec.formName = formName;
+
+        cliOutput.innerHTML += `<span style="color:#3fb950;">✓ Generated: "${spec.title}" (${(spec.sections || []).reduce((n, s) => n + (s.fields || []).length, 0)} fields)</span>\n`;
+        cliOutput.innerHTML += `<span style="color:#8b949e;">Saving and building...</span>\n`;
+        cliOutput.scrollTop = cliOutput.scrollHeight;
+
+        const saveRes = await fetch('/api/cli/save-form', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ spec })
+        });
+        const saveData = await saveRes.json();
+        if (saveData.ok) {
+          cliOutput.innerHTML += `<span style="color:#3fb950;">✓ Form saved: /${formName}/</span>\n`;
+          cliOutput.innerHTML += `<span style="color:#8b949e;">  Open: <a href="/${formName}/" target="_blank" style="color:#58a6ff;">/${formName}/</a></span>\n`;
+        } else {
+          cliOutput.innerHTML += `<span style="color:#f85149;">Save error: ${escHtml(saveData.error)}</span>\n`;
+        }
+      } catch (err) {
+        cliOutput.innerHTML += `<span style="color:#f85149;">❌ ${escHtml(err.message)}</span>\n`;
+      }
+      cliOutput.scrollTop = cliOutput.scrollHeight;
+    }
+
+    const GENERATE_SYSTEM_PROMPT = `You are a form design assistant. Given a user's description of a data entry form, produce a JSON specification.
+
+Return ONLY valid JSON (no markdown fences, no explanation) matching this schema:
+
+{
+  "title": "Form Title",
+  "formName": "snake_case_form_name",
+  "sections": [
+    {
+      "heading": "Section Title",
+      "fields": [
+        {
+          "type": "text|password|dropdown|checkbox|radio|table|button|link",
+          "label": "Field Label",
+          "name": "field_name",
+          "placeholder": "optional placeholder",
+          "required": true|false,
+          "options": ["opt1", "opt2"],
+          "href": "/page_name/",
+          "columns": [{ "header": "Col Name", "type": "text|dropdown|checkbox|calculated", "name": "col_name", "options": [], "formula": "{col1} {col2}" }],
+          "initialRows": 1,
+          "events": [{ "event": "click|change|input", "description": "What should happen", "handler": "// JS code" }]
+        }
+      ]
+    }
+  ]
+}
+
+Rules:
+- Use "password" type for secrets. Use "link" type for navigation (href: "/page_name/").
+- "options" is for dropdown/radio only. "columns"/"initialRows" for table only.
+- Use snake_case for all "name" fields. Always include a submit button.
+- IMPORTANT: The form always has id="main-form". Any submit handler MUST use: document.getElementById('main-form').requestSubmit()
+- Do NOT generate "Add Row"/"Delete Row" buttons for tables (system adds those).
+- Set initialRows to 1 for tables. Be creative but practical.`;
+
     // CLI execution
     async function runCli() {
       const cmd = cliInput.value.trim();
@@ -317,6 +418,16 @@
       cliOutput.innerHTML += `\n<span style="color:#3fb950;">$ ${escHtml(cmd)}</span>\n`;
       cliInput.value = '';
       cliRun.disabled = true;
+
+      const parts = cmd.trim().split(/\s+/);
+      const subCmd = parts[1];
+
+      // Intercept generate/edit — run browser-side (LLM needs internet)
+      if ((parts[0] === 'adcgen' || parts[0] === 'adc') && subCmd === 'generate') {
+        await handleGenerate(parts.slice(2));
+        cliRun.disabled = false;
+        return;
+      }
 
       try {
         const res = await fetch('/api/cli/exec', {

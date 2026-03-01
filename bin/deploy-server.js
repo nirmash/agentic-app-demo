@@ -150,6 +150,50 @@ app.post('/api/cli/logout', (req, res) => {
   res.json({ ok: true });
 });
 
+// API: save generated/edited form spec (LLM call happens browser-side)
+app.post('/api/cli/save-form', async (req, res) => {
+  const { spec } = req.body;
+  if (!spec || !spec.formName) return res.status(400).json({ error: 'Invalid spec' });
+
+  try {
+    const { buildEleventySite } = await import('../src/eleventy-builder.js');
+    const { siteDir, fileName, dataDir } = buildEleventySite(spec, ROOT);
+
+    // Also copy to _site (production static dir) by running eleventy
+    try {
+      execFileSync('npx', ['@11ty/eleventy'], { cwd: ROOT, timeout: 30000, encoding: 'utf-8' });
+    } catch {
+      // If eleventy fails, manually copy the file
+      const srcFile = path.join(ROOT, '_site_src', fileName);
+      const destFile = path.join(SITE_DIR, fileName);
+      if (fs.existsSync(srcFile)) fs.copyFileSync(srcFile, destFile);
+      // Copy index too
+      const srcIdx = path.join(ROOT, '_site_src', 'index.html');
+      const destIdx = path.join(SITE_DIR, 'index.html');
+      if (fs.existsSync(srcIdx)) fs.copyFileSync(srcIdx, destIdx);
+    }
+
+    // Sync to DB if available
+    const specPath = path.join(dataDir, `${spec.formName}_spec.json`);
+    if (process.env.DATABASE_URL && fs.existsSync(specPath)) {
+      syncToDb(spec.formName, {}, specPath).catch(() => {});
+    }
+
+    res.json({ ok: true, fileName, formName: spec.formName });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// API: get auth token for browser-side LLM calls
+app.get('/api/cli/token', (req, res) => {
+  const config = readAdcgenConfig();
+  if (config.github_token) {
+    return res.json({ ok: true, token: config.github_token });
+  }
+  res.json({ ok: false, error: 'Not logged in' });
+});
+
 // API: adcgen CLI execution
 app.post('/api/cli/exec', (req, res) => {
   const { command } = req.body;
