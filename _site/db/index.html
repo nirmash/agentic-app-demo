@@ -414,8 +414,9 @@
         cliOutput.innerHTML += renderHtmlPreview(spec);
         cliOutput.innerHTML += `\n<span style="color:#d29922;">Approve this form?</span> `;
 
-        // Create buttons as elements (not innerHTML) to avoid stale ID references
-        const btnWrap = document.createElement('span');
+        // Create buttons as elements — attach handlers before adding to DOM
+        const btnWrap = document.createElement('div');
+        btnWrap.style.display = 'inline';
         const approveBtn = document.createElement('button');
         approveBtn.className = 'btn btn-sm btn-primary mr-1';
         approveBtn.style.pointerEvents = 'auto';
@@ -424,11 +425,6 @@
         rejectBtn.className = 'btn btn-sm btn-danger';
         rejectBtn.style.pointerEvents = 'auto';
         rejectBtn.textContent = '✗ Reject';
-        btnWrap.appendChild(approveBtn);
-        btnWrap.appendChild(rejectBtn);
-        cliOutput.appendChild(btnWrap);
-        cliOutput.innerHTML += '\n';
-        cliOutput.scrollTop = cliOutput.scrollHeight;
 
         pendingSpec = spec;
         approveBtn.onclick = () => {
@@ -441,6 +437,12 @@
           rejectBtn.disabled = true;
           rejectForm();
         };
+
+        btnWrap.appendChild(approveBtn);
+        btnWrap.appendChild(rejectBtn);
+        cliOutput.appendChild(btnWrap);
+        cliOutput.appendChild(document.createTextNode('\n'));
+        cliOutput.scrollTop = cliOutput.scrollHeight;
       } catch (err) {
         cliOutput.innerHTML += `<span style="color:#f85149;">❌ ${escHtml(err.message)}</span>\n`;
       }
