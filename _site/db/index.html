@@ -413,13 +413,34 @@
         cliOutput.innerHTML += `<span style="color:#3fb950;">✓ Generated: "${spec.title}" (${fieldCount} fields)</span>\n`;
         cliOutput.innerHTML += renderHtmlPreview(spec);
         cliOutput.innerHTML += `\n<span style="color:#d29922;">Approve this form?</span> `;
-        cliOutput.innerHTML += `<button id="approve-btn" class="btn btn-sm btn-primary mr-1" style="pointer-events:auto;">✓ Approve &amp; Save</button>`;
-        cliOutput.innerHTML += `<button id="reject-btn" class="btn btn-sm btn-danger" style="pointer-events:auto;">✗ Reject</button>\n`;
+
+        // Create buttons as elements (not innerHTML) to avoid stale ID references
+        const btnWrap = document.createElement('span');
+        const approveBtn = document.createElement('button');
+        approveBtn.className = 'btn btn-sm btn-primary mr-1';
+        approveBtn.style.pointerEvents = 'auto';
+        approveBtn.innerHTML = '✓ Approve &amp; Save';
+        const rejectBtn = document.createElement('button');
+        rejectBtn.className = 'btn btn-sm btn-danger';
+        rejectBtn.style.pointerEvents = 'auto';
+        rejectBtn.textContent = '✗ Reject';
+        btnWrap.appendChild(approveBtn);
+        btnWrap.appendChild(rejectBtn);
+        cliOutput.appendChild(btnWrap);
+        cliOutput.innerHTML += '\n';
         cliOutput.scrollTop = cliOutput.scrollHeight;
 
         pendingSpec = spec;
-        document.getElementById('approve-btn').onclick = () => approveForm();
-        document.getElementById('reject-btn').onclick = () => rejectForm();
+        approveBtn.onclick = () => {
+          approveBtn.disabled = true;
+          rejectBtn.disabled = true;
+          approveForm();
+        };
+        rejectBtn.onclick = () => {
+          approveBtn.disabled = true;
+          rejectBtn.disabled = true;
+          rejectForm();
+        };
       } catch (err) {
         cliOutput.innerHTML += `<span style="color:#f85149;">❌ ${escHtml(err.message)}</span>\n`;
       }
@@ -430,11 +451,6 @@
       if (!pendingSpec) return;
       const spec = pendingSpec;
       pendingSpec = null;
-      // Disable buttons
-      const ab = document.getElementById('approve-btn');
-      const rb = document.getElementById('reject-btn');
-      if (ab) ab.disabled = true;
-      if (rb) rb.disabled = true;
 
       cliOutput.innerHTML += `<span style="color:#8b949e;">Saving and building...</span>\n`;
       cliOutput.scrollTop = cliOutput.scrollHeight;
@@ -460,10 +476,6 @@
 
     function rejectForm() {
       pendingSpec = null;
-      const ab = document.getElementById('approve-btn');
-      const rb = document.getElementById('reject-btn');
-      if (ab) ab.disabled = true;
-      if (rb) rb.disabled = true;
       cliOutput.innerHTML += `<span style="color:#8b949e;">Form rejected. Run generate again to try a new design.</span>\n`;
       cliOutput.scrollTop = cliOutput.scrollHeight;
     }
