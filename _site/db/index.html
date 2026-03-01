@@ -330,6 +330,76 @@
       return content.replace(/^```(?:json|html)?\n?/m, '').replace(/\n?```$/m, '').trim();
     }
 
+    // ASCII form preview (port of src/ascii-preview.js for browser)
+    function renderAsciiPreview(spec) {
+      const W = 60, B = { tl:'┌', tr:'┐', bl:'└', br:'┘', h:'─', v:'│' };
+      const ln = (c=B.h) => c.repeat(W);
+      const top = () => B.tl + ln() + B.tr;
+      const bot = () => B.bl + ln() + B.br;
+      const row = (t) => { const p = t.padEnd(W); return B.v + p.substring(0,W) + B.v; };
+      const empty = () => row('');
+      const fld = (f) => {
+        const lines = [], req = f.required ? ' *' : '';
+        switch(f.type) {
+          case 'text': case 'password':
+            lines.push(row(` ${f.label}${req}`));
+            lines.push(row(` ┌${'─'.repeat(W-4)}┐`));
+            lines.push(row(` │ ${(f.placeholder||'').padEnd(W-6)}│`));
+            lines.push(row(` └${'─'.repeat(W-4)}┘`));
+            break;
+          case 'dropdown':
+            lines.push(row(` ${f.label}${req}`));
+            lines.push(row(` ┌${'─'.repeat(W-6)}▼┐`));
+            lines.push(row(` │ ${(f.options||[]).slice(0,3).join(' | ').padEnd(W-6)}│`));
+            lines.push(row(` └${'─'.repeat(W-4)}┘`));
+            break;
+          case 'checkbox':
+            if (f.options?.length) { lines.push(row(` ${f.label}`)); f.options.slice(0,4).forEach(o => lines.push(row(`   ☐ ${o}`))); }
+            else lines.push(row(`   ☐ ${f.label}`));
+            break;
+          case 'radio':
+            lines.push(row(` ${f.label}`)); (f.options||[]).slice(0,4).forEach(o => lines.push(row(`   ◯ ${o}`)));
+            break;
+          case 'button': {
+            const lbl = f.label||'Button', pad = Math.max(0,Math.floor((W-lbl.length-6)/2));
+            lines.push(empty(), row(' '.repeat(pad)+`[ ${lbl} ]`), empty());
+            break;
+          }
+          case 'table': {
+            lines.push(row(` ${f.label}`));
+            const cols = f.columns||[], cw = Math.max(8,Math.floor((W-2)/Math.max(cols.length,1))-1);
+            let hdr = ' '; cols.forEach(c => hdr += c.header.substring(0,cw).padEnd(cw)+'│');
+            lines.push(row(hdr));
+            lines.push(row(' '+('─'.repeat(cw)+'┼').repeat(cols.length)));
+            for (let r=0; r<Math.min(f.initialRows||1,3); r++) {
+              let rw = ' '; cols.forEach(c => { const ph = c.type==='checkbox'?'☐':c.type==='dropdown'?'▼ ...':c.type==='calculated'?'=calc':'___'; rw += ph.padEnd(cw)+'│'; });
+              rw = rw.substring(0,W-3)+' ✕'; lines.push(row(rw));
+            }
+            lines.push(row('  [ + Add Row ]'));
+            break;
+          }
+          case 'link':
+            lines.push(row(` 🔗 ${f.label} → ${f.href||'#'}`));
+            break;
+          default:
+            lines.push(row(` ${f.label}${req}`));
+            lines.push(row(` ┌${'─'.repeat(W-4)}┐`));
+            lines.push(row(` │ ${(f.placeholder||'').padEnd(W-6)}│`));
+            lines.push(row(` └${'─'.repeat(W-4)}┘`));
+        }
+        return lines;
+      };
+      const out = ['', top()];
+      const tp = Math.max(0,Math.floor((W-spec.title.length)/2));
+      out.push(row(' '.repeat(tp)+spec.title), row(ln('━')), empty());
+      for (const s of spec.sections||[]) {
+        if (s.heading) { out.push(row(` ■ ${s.heading}`), row(` ${'─'.repeat(s.heading.length+2)}`)); }
+        for (const f of s.fields||[]) { out.push(...fld(f), empty()); }
+      }
+      out.push(bot(), '');
+      return out.join('\n');
+    }
+
     // Handle generate command browser-side (LLM call from browser, save on server)
     async function handleGenerate(args) {
       // Parse: adcgen generate <name> <description...>
@@ -350,7 +420,9 @@
         const spec = JSON.parse(raw);
         spec.formName = formName;
 
+        // Show ASCII preview
         cliOutput.innerHTML += `<span style="color:#3fb950;">✓ Generated: "${spec.title}" (${(spec.sections || []).reduce((n, s) => n + (s.fields || []).length, 0)} fields)</span>\n`;
+        cliOutput.innerHTML += `<span style="color:#58a6ff;">${escHtml(renderAsciiPreview(spec))}</span>\n`;
         cliOutput.innerHTML += `<span style="color:#8b949e;">Saving and building...</span>\n`;
         cliOutput.scrollTop = cliOutput.scrollHeight;
 
