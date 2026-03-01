@@ -150,3 +150,27 @@ export async function syncToDb(formName, data, specPath) {
 export function resolveSpecPath(dataDir, formName) {
   return path.join(dataDir, `${formName}_spec.json`);
 }
+
+/**
+ * Drop all tables associated with a form (main + child tables).
+ * Reads the spec to find child table names, then drops them all.
+ */
+export async function dropFormTables(formName, specPath) {
+  if (!process.env.DATABASE_URL) return;
+
+  let childNames = [];
+  if (fs.existsSync(specPath)) {
+    try {
+      const spec = JSON.parse(fs.readFileSync(specPath, 'utf-8'));
+      const { childTables } = schemaFromSpec(spec);
+      childNames = childTables.map(c => `${formName}_${c.name}`);
+    } catch {}
+  }
+
+  // Drop child tables first (FK references), then main table
+  for (const t of [...childNames, formName]) {
+    try {
+      await pool.query(`DROP TABLE IF EXISTS "${t}" CASCADE`);
+    } catch {}
+  }
+}

@@ -488,6 +488,7 @@ export function createCli() {
     .action(async (names) => {
       const fs = (await import('fs')).default;
       const siteDir = path.join(PROJECT_ROOT, '_site_src');
+      const dataDir = path.join(PROJECT_ROOT, '_data');
       if (!fs.existsSync(siteDir)) {
         console.log('⚠️  No forms found. Nothing to remove.\n');
         return;
@@ -500,16 +501,44 @@ export function createCli() {
         } else {
           console.log(`  ⚠️  Not found: ${name}`);
         }
+        // Also remove from _site (production output)
+        const prodFile = path.join(PROJECT_ROOT, '_site', `${name}.html`);
+        if (fs.existsSync(prodFile)) fs.unlinkSync(prodFile);
+        // Remove spec file (read it first for DB cleanup)
+        const specFile = path.join(dataDir, `${name}_spec.json`);
+        // Drop DB tables if DATABASE_URL is set (Embr context)
+        if (process.env.DATABASE_URL) {
+          try {
+            const { dropFormTables } = await import('./db-sync.js');
+            await dropFormTables(name, specFile);
+            console.log(`  🗄  Dropped DB tables for: ${name}`);
+          } catch (err) {
+            console.log(`  ⚠️  DB cleanup failed: ${err.message}`);
+          }
+        }
+        if (fs.existsSync(specFile)) fs.unlinkSync(specFile);
+        // Remove data files
+        if (fs.existsSync(dataDir)) {
+          for (const f of fs.readdirSync(dataDir)) {
+            if (f.startsWith(`${name}_`) && f.endsWith('.json') && !f.endsWith('_spec.json')) {
+              fs.unlinkSync(path.join(dataDir, f));
+            }
+          }
+        }
       }
-      // Regenerate index
+      // Regenerate index for both _site_src and _site
       const remaining = fs.readdirSync(siteDir).filter(f => f.endsWith('.html') && f !== 'index.html');
       if (remaining.length > 0) {
         const { generateIndexPage } = await import('./eleventy-builder.js');
         generateIndexPage(siteDir);
+        const prodSiteDir = path.join(PROJECT_ROOT, '_site');
+        if (fs.existsSync(prodSiteDir)) generateIndexPage(prodSiteDir);
       } else {
         // No forms left, clean up index too
-        const indexFile = path.join(siteDir, 'index.html');
-        if (fs.existsSync(indexFile)) fs.unlinkSync(indexFile);
+        for (const d of [siteDir, path.join(PROJECT_ROOT, '_site')]) {
+          const indexFile = path.join(d, 'index.html');
+          if (fs.existsSync(indexFile)) fs.unlinkSync(indexFile);
+        }
       }
       console.log(`\n  📋 ${remaining.length} form${remaining.length !== 1 ? 's' : ''} remaining.\n`);
     });
