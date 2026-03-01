@@ -7,7 +7,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { v4 as uuidv4 } from 'uuid';
-import { execFile } from 'child_process';
+import { execFile, execFileSync } from 'child_process';
 import { syncToDb, resolveSpecPath } from '../src/db-sync.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -92,17 +92,79 @@ if (process.env.DATABASE_URL) {
   });
 }
 
+// API: adcgen auth — login via gh CLI token (no external API call needed)
+const ADCGEN_CONFIG_DIR = path.join(process.env.HOME || '/root', '.adcgen');
+const ADCGEN_CONFIG = path.join(ADCGEN_CONFIG_DIR, 'config.json');
+
+function readAdcgenConfig() {
+  try { return JSON.parse(fs.readFileSync(ADCGEN_CONFIG, 'utf-8')); } catch { return {}; }
+}
+
+app.get('/api/cli/auth-status', (req, res) => {
+  const config = readAdcgenConfig();
+  if (config.github_token) {
+    return res.json({ ok: true, loggedIn: true, user: config.github_user || 'authenticated' });
+  }
+  // Check if gh CLI has a token
+  try {
+    const token = execFileSync('gh', ['auth', 'token'], { encoding: 'utf-8', timeout: 5000 }).trim();
+    if (token && token.length > 10) {
+      return res.json({ ok: true, loggedIn: false, ghCliAvailable: true });
+    }
+  } catch {}
+  res.json({ ok: true, loggedIn: false, ghCliAvailable: false });
+});
+
+app.post('/api/cli/login', async (req, res) => {
+  const { token: manualToken } = req.body || {};
+  let token = manualToken;
+
+  // If no manual token, try gh CLI
+  if (!token) {
+    try {
+      token = execFileSync('gh', ['auth', 'token'], { encoding: 'utf-8', timeout: 5000 }).trim();
+    } catch {}
+  }
+
+  if (!token || token.length < 10) {
+    return res.json({ ok: false, error: 'No token available. Paste a GitHub personal access token.' });
+  }
+
+  // Save the token without calling external GitHub API (avoids proxy issues on Embr)
+  fs.mkdirSync(ADCGEN_CONFIG_DIR, { recursive: true });
+  const config = readAdcgenConfig();
+  config.github_token = token;
+
+  // Try to get username from gh CLI (local, no network)
+  try {
+    const user = execFileSync('gh', ['api', 'user', '--jq', '.login'], { encoding: 'utf-8', timeout: 5000 }).trim();
+    if (user) config.github_user = user;
+  } catch {}
+
+  fs.writeFileSync(ADCGEN_CONFIG, JSON.stringify(config, null, 2));
+  res.json({ ok: true, user: config.github_user || 'authenticated' });
+});
+
+app.post('/api/cli/logout', (req, res) => {
+  try { fs.unlinkSync(ADCGEN_CONFIG); } catch {}
+  res.json({ ok: true });
+});
+
 // API: adcgen CLI execution
 app.post('/api/cli/exec', (req, res) => {
   const { command } = req.body;
   if (!command) return res.status(400).json({ error: 'No command provided' });
 
-  // Only allow adcgen subcommands (non-interactive ones)
-  const allowed = ['list', 'list_data', 'rebuild', 'help', '--help', '-h'];
   const args = command.trim().split(/\s+/);
   const bin = args[0];
   if (bin !== 'adcgen' && bin !== 'adc') {
     return res.status(400).json({ error: 'Only adcgen/adc commands are allowed' });
+  }
+
+  // Intercept login/logout — handled by dedicated endpoints
+  const subCmd = args[1];
+  if (subCmd === 'login' || subCmd === 'logout') {
+    return res.json({ ok: true, output: `Use the login panel above instead of "adcgen ${subCmd}".` });
   }
 
   const binPath = path.join(ROOT, 'bin', bin === 'adc' ? 'adc.js' : 'adcgen.js');
