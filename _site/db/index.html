@@ -330,79 +330,68 @@
       return content.replace(/^```(?:json|html)?\n?/m, '').replace(/\n?```$/m, '').trim();
     }
 
-    // ASCII form preview (port of src/ascii-preview.js for browser)
-    function renderAsciiPreview(spec) {
-      const W = 60, B = { tl:'┌', tr:'┐', bl:'└', br:'┘', h:'─', v:'│' };
-      const ln = (c=B.h) => c.repeat(W);
-      const top = () => B.tl + ln() + B.tr;
-      const bot = () => B.bl + ln() + B.br;
-      const row = (t) => { const p = t.padEnd(W); return B.v + p.substring(0,W) + B.v; };
-      const empty = () => row('');
-      const fld = (f) => {
-        const lines = [], req = f.required ? ' *' : '';
-        switch(f.type) {
-          case 'text': case 'password':
-            lines.push(row(` ${f.label}${req}`));
-            lines.push(row(` ┌${'─'.repeat(W-4)}┐`));
-            lines.push(row(` │ ${(f.placeholder||'').padEnd(W-6)}│`));
-            lines.push(row(` └${'─'.repeat(W-4)}┘`));
-            break;
-          case 'dropdown':
-            lines.push(row(` ${f.label}${req}`));
-            lines.push(row(` ┌${'─'.repeat(W-6)}▼┐`));
-            lines.push(row(` │ ${(f.options||[]).slice(0,3).join(' | ').padEnd(W-6)}│`));
-            lines.push(row(` └${'─'.repeat(W-4)}┘`));
-            break;
-          case 'checkbox':
-            if (f.options?.length) { lines.push(row(` ${f.label}`)); f.options.slice(0,4).forEach(o => lines.push(row(`   ☐ ${o}`))); }
-            else lines.push(row(`   ☐ ${f.label}`));
-            break;
-          case 'radio':
-            lines.push(row(` ${f.label}`)); (f.options||[]).slice(0,4).forEach(o => lines.push(row(`   ◯ ${o}`)));
-            break;
-          case 'button': {
-            const lbl = f.label||'Button', pad = Math.max(0,Math.floor((W-lbl.length-6)/2));
-            lines.push(empty(), row(' '.repeat(pad)+`[ ${lbl} ]`), empty());
-            break;
-          }
-          case 'table': {
-            lines.push(row(` ${f.label}`));
-            const cols = f.columns||[], cw = Math.max(8,Math.floor((W-2)/Math.max(cols.length,1))-1);
-            let hdr = ' '; cols.forEach(c => hdr += c.header.substring(0,cw).padEnd(cw)+'│');
-            lines.push(row(hdr));
-            lines.push(row(' '+('─'.repeat(cw)+'┼').repeat(cols.length)));
-            for (let r=0; r<Math.min(f.initialRows||1,3); r++) {
-              let rw = ' '; cols.forEach(c => { const ph = c.type==='checkbox'?'☐':c.type==='dropdown'?'▼ ...':c.type==='calculated'?'=calc':'___'; rw += ph.padEnd(cw)+'│'; });
-              rw = rw.substring(0,W-3)+' ✕'; lines.push(row(rw));
+    // Render spec as read-only HTML preview (using Primer CSS)
+    function renderHtmlPreview(spec) {
+      const e = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      let html = `<div style="background:#161b22; border:1px solid #30363d; border-radius:8px; padding:1.5rem; max-width:560px; margin:0.5rem 0; pointer-events:none; opacity:0.95;">`;
+      html += `<h3 style="margin:0 0 0.5rem; color:#e6edf3; border-bottom:1px solid #30363d; padding-bottom:0.5rem;">${e(spec.title)}</h3>`;
+      for (const s of spec.sections || []) {
+        if (s.heading) html += `<h4 style="color:#8b949e; margin:0.75rem 0 0.25rem; font-size:13px; text-transform:uppercase; letter-spacing:0.5px;">${e(s.heading)}</h4>`;
+        for (const f of s.fields || []) {
+          const req = f.required ? ' <span style="color:#f85149;">*</span>' : '';
+          switch (f.type) {
+            case 'text': case 'password':
+              html += `<div style="margin-bottom:0.75rem;"><label style="display:block;color:#e6edf3;font-size:13px;font-weight:600;margin-bottom:4px;">${e(f.label)}${req}</label><input type="${f.type==='password'?'password':'text'}" disabled placeholder="${e(f.placeholder||'')}" style="width:100%;background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:5px 12px;color:#8b949e;font-size:14px;"></div>`;
+              break;
+            case 'dropdown':
+              html += `<div style="margin-bottom:0.75rem;"><label style="display:block;color:#e6edf3;font-size:13px;font-weight:600;margin-bottom:4px;">${e(f.label)}${req}</label><select disabled style="width:100%;background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:5px 12px;color:#8b949e;font-size:14px;appearance:auto;"><option>Select...</option>${(f.options||[]).map(o=>`<option>${e(o)}</option>`).join('')}</select></div>`;
+              break;
+            case 'checkbox':
+              if (f.options?.length) {
+                html += `<div style="margin-bottom:0.75rem;"><label style="display:block;color:#e6edf3;font-size:13px;font-weight:600;margin-bottom:4px;">${e(f.label)}</label>`;
+                f.options.slice(0,5).forEach(o => { html += `<div style="margin-left:4px;color:#8b949e;font-size:13px;"><input type="checkbox" disabled> ${e(o)}</div>`; });
+                html += `</div>`;
+              } else {
+                html += `<div style="margin-bottom:0.75rem;color:#8b949e;font-size:13px;"><input type="checkbox" disabled> ${e(f.label)}</div>`;
+              }
+              break;
+            case 'radio':
+              html += `<div style="margin-bottom:0.75rem;"><label style="display:block;color:#e6edf3;font-size:13px;font-weight:600;margin-bottom:4px;">${e(f.label)}</label>`;
+              (f.options||[]).slice(0,5).forEach(o => { html += `<div style="margin-left:4px;color:#8b949e;font-size:13px;"><input type="radio" disabled> ${e(o)}</div>`; });
+              html += `</div>`;
+              break;
+            case 'button':
+              html += `<div style="margin:0.75rem 0; text-align:center;"><span style="display:inline-block;background:#238636;color:#fff;border-radius:6px;padding:5px 16px;font-size:14px;font-weight:600;">${e(f.label||'Submit')}</span></div>`;
+              break;
+            case 'table': {
+              const cols = f.columns || [];
+              html += `<div style="margin-bottom:0.75rem;"><label style="display:block;color:#e6edf3;font-size:13px;font-weight:600;margin-bottom:4px;">${e(f.label)}</label>`;
+              html += `<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr>`;
+              cols.forEach(c => { html += `<th style="border:1px solid #30363d;padding:4px 8px;background:#0d1117;color:#8b949e;text-align:left;">${e(c.header)}</th>`; });
+              html += `</tr></thead><tbody><tr>`;
+              cols.forEach(c => {
+                const ph = c.type==='checkbox'?'<input type="checkbox" disabled>':c.type==='dropdown'?'<select disabled style="background:#0d1117;border:1px solid #30363d;color:#8b949e;font-size:11px;border-radius:3px;"><option>▼</option></select>':c.type==='calculated'?'<em style="color:#8b949e;">=calc</em>':'<span style="color:#484f58;">___</span>';
+                html += `<td style="border:1px solid #30363d;padding:4px 8px;background:#0d1117;">${ph}</td>`;
+              });
+              html += `</tr></tbody></table></div>`;
+              break;
             }
-            lines.push(row('  [ + Add Row ]'));
-            break;
+            case 'link':
+              html += `<div style="margin-bottom:0.75rem;"><span style="color:#58a6ff;font-size:13px;">🔗 ${e(f.label)}</span></div>`;
+              break;
+            default:
+              html += `<div style="margin-bottom:0.75rem;"><label style="display:block;color:#e6edf3;font-size:13px;font-weight:600;margin-bottom:4px;">${e(f.label)}${req}</label><input type="text" disabled placeholder="${e(f.placeholder||'')}" style="width:100%;background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:5px 12px;color:#8b949e;font-size:14px;"></div>`;
           }
-          case 'link':
-            lines.push(row(` 🔗 ${f.label} → ${f.href||'#'}`));
-            break;
-          default:
-            lines.push(row(` ${f.label}${req}`));
-            lines.push(row(` ┌${'─'.repeat(W-4)}┐`));
-            lines.push(row(` │ ${(f.placeholder||'').padEnd(W-6)}│`));
-            lines.push(row(` └${'─'.repeat(W-4)}┘`));
         }
-        return lines;
-      };
-      const out = ['', top()];
-      const tp = Math.max(0,Math.floor((W-spec.title.length)/2));
-      out.push(row(' '.repeat(tp)+spec.title), row(ln('━')), empty());
-      for (const s of spec.sections||[]) {
-        if (s.heading) { out.push(row(` ■ ${s.heading}`), row(` ${'─'.repeat(s.heading.length+2)}`)); }
-        for (const f of s.fields||[]) { out.push(...fld(f), empty()); }
       }
-      out.push(bot(), '');
-      return out.join('\n');
+      html += `</div>`;
+      return html;
     }
 
     // Handle generate command browser-side (LLM call from browser, save on server)
+    let pendingSpec = null;
+
     async function handleGenerate(args) {
-      // Parse: adcgen generate <name> <description...>
       const name = args[0];
       const description = args.slice(1).join(' ');
       if (!name) { cliOutput.innerHTML += `<span style="color:#f85149;">Usage: adcgen generate &lt;form_name&gt; &lt;description&gt;</span>\n`; return; }
@@ -420,12 +409,37 @@
         const spec = JSON.parse(raw);
         spec.formName = formName;
 
-        // Show ASCII preview
-        cliOutput.innerHTML += `<span style="color:#3fb950;">✓ Generated: "${spec.title}" (${(spec.sections || []).reduce((n, s) => n + (s.fields || []).length, 0)} fields)</span>\n`;
-        cliOutput.innerHTML += `<span style="color:#58a6ff;">${escHtml(renderAsciiPreview(spec))}</span>\n`;
-        cliOutput.innerHTML += `<span style="color:#8b949e;">Saving and building...</span>\n`;
+        const fieldCount = (spec.sections || []).reduce((n, s) => n + (s.fields || []).length, 0);
+        cliOutput.innerHTML += `<span style="color:#3fb950;">✓ Generated: "${spec.title}" (${fieldCount} fields)</span>\n`;
+        cliOutput.innerHTML += renderHtmlPreview(spec);
+        cliOutput.innerHTML += `\n<span style="color:#d29922;">Approve this form?</span> `;
+        cliOutput.innerHTML += `<button id="approve-btn" class="btn btn-sm btn-primary mr-1" style="pointer-events:auto;">✓ Approve &amp; Save</button>`;
+        cliOutput.innerHTML += `<button id="reject-btn" class="btn btn-sm btn-danger" style="pointer-events:auto;">✗ Reject</button>\n`;
         cliOutput.scrollTop = cliOutput.scrollHeight;
 
+        pendingSpec = spec;
+        document.getElementById('approve-btn').onclick = () => approveForm();
+        document.getElementById('reject-btn').onclick = () => rejectForm();
+      } catch (err) {
+        cliOutput.innerHTML += `<span style="color:#f85149;">❌ ${escHtml(err.message)}</span>\n`;
+      }
+      cliOutput.scrollTop = cliOutput.scrollHeight;
+    }
+
+    async function approveForm() {
+      if (!pendingSpec) return;
+      const spec = pendingSpec;
+      pendingSpec = null;
+      // Disable buttons
+      const ab = document.getElementById('approve-btn');
+      const rb = document.getElementById('reject-btn');
+      if (ab) ab.disabled = true;
+      if (rb) rb.disabled = true;
+
+      cliOutput.innerHTML += `<span style="color:#8b949e;">Saving and building...</span>\n`;
+      cliOutput.scrollTop = cliOutput.scrollHeight;
+
+      try {
         const saveRes = await fetch('/api/cli/save-form', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -433,14 +447,24 @@
         });
         const saveData = await saveRes.json();
         if (saveData.ok) {
-          cliOutput.innerHTML += `<span style="color:#3fb950;">✓ Form saved: /${formName}/</span>\n`;
-          cliOutput.innerHTML += `<span style="color:#8b949e;">  Open: <a href="/${formName}/" target="_blank" style="color:#58a6ff;">/${formName}/</a></span>\n`;
+          cliOutput.innerHTML += `<span style="color:#3fb950;">✓ Form saved: /${spec.formName}/</span>\n`;
+          cliOutput.innerHTML += `<span style="color:#8b949e;">  Open: <a href="/${spec.formName}/" target="_blank" style="color:#58a6ff; pointer-events:auto;">/${spec.formName}/</a></span>\n`;
         } else {
           cliOutput.innerHTML += `<span style="color:#f85149;">Save error: ${escHtml(saveData.error)}</span>\n`;
         }
       } catch (err) {
         cliOutput.innerHTML += `<span style="color:#f85149;">❌ ${escHtml(err.message)}</span>\n`;
       }
+      cliOutput.scrollTop = cliOutput.scrollHeight;
+    }
+
+    function rejectForm() {
+      pendingSpec = null;
+      const ab = document.getElementById('approve-btn');
+      const rb = document.getElementById('reject-btn');
+      if (ab) ab.disabled = true;
+      if (rb) rb.disabled = true;
+      cliOutput.innerHTML += `<span style="color:#8b949e;">Form rejected. Run generate again to try a new design.</span>\n`;
       cliOutput.scrollTop = cliOutput.scrollHeight;
     }
 
