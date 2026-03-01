@@ -90,6 +90,62 @@ if (process.env.DATABASE_URL) {
       res.status(500).json({ error: err.message });
     }
   });
+
+  // List all records for a form (ordered by submitted_at desc)
+  app.get('/api/db/records/:formName', async (req, res) => {
+    const { formName } = req.params;
+    try {
+      // Check if table exists
+      const tableCheck = await pool.query(
+        `SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = $1`, [formName]
+      );
+      if (tableCheck.rows.length === 0) return res.json({ ok: true, records: [] });
+
+      const result = await pool.query(
+        `SELECT * FROM "${formName}" ORDER BY submitted_at DESC`
+      );
+      res.json({ ok: true, records: result.rows });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Get a single record with child table data
+  app.get('/api/db/record/:formName/:sessionId', async (req, res) => {
+    const { formName, sessionId } = req.params;
+    try {
+      const main = await pool.query(
+        `SELECT * FROM "${formName}" WHERE session_id = $1`, [sessionId]
+      );
+      if (main.rows.length === 0) return res.status(404).json({ error: 'Not found' });
+
+      const record = main.rows[0];
+
+      // Load child table data from spec
+      const specPath = path.join(DATA_DIR, `${formName}_spec.json`);
+      if (fs.existsSync(specPath)) {
+        const spec = JSON.parse(fs.readFileSync(specPath, 'utf-8'));
+        for (const section of spec.sections || []) {
+          for (const field of section.fields || []) {
+            if (field.type === 'table' && field.name) {
+              const suffix = field.name.startsWith(formName + '_') ? field.name.slice(formName.length + 1) : field.name;
+              const childTable = `${formName}_${suffix}`;
+              try {
+                const childRows = await pool.query(
+                  `SELECT * FROM "${childTable}" WHERE session_id = $1 ORDER BY row_index`, [sessionId]
+                );
+                record[field.name] = childRows.rows;
+              } catch {}
+            }
+          }
+        }
+      }
+
+      res.json({ ok: true, record });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
 }
 
 // API: adcgen auth — login via gh CLI token (no external API call needed)

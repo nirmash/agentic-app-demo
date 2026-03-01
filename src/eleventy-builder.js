@@ -242,6 +242,17 @@ export function generateFormHtml(spec) {
     <form id="main-form">
 ${sectionsHtml}
     </form>
+
+    <!-- Record navigation bar -->
+    <div id="record-nav" style="display:none; margin-top:1rem; padding:0.75rem; background:var(--bgColor-muted,#161b22); border:1px solid var(--borderColor-default,#30363d); border-radius:6px;">
+      <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+        <button type="button" id="record-prev" class="btn btn-sm" disabled>← Prev</button>
+        <span id="record-counter" style="font-size:13px; color:var(--fgColor-muted,#8b949e); min-width:80px; text-align:center;">— / —</span>
+        <button type="button" id="record-next" class="btn btn-sm" disabled>Next →</button>
+        <span style="flex:auto;"></span>
+        <button type="button" id="record-new" class="btn btn-sm btn-primary">+ New Record</button>
+      </div>
+    </div>
   </div>
 
   <!-- ⚠️ DO NOT EDIT: Form submission and data loading scripts managed by adcgen -->
@@ -434,6 +445,84 @@ ${sectionsHtml}
         })
         .catch(() => {});
     }
+
+    // ─── DB Record Navigation ─────────────────────────────────
+    let dbRecords = [];
+    let currentRecordIdx = -1;
+    const recordNav = document.getElementById('record-nav');
+    const recordPrev = document.getElementById('record-prev');
+    const recordNext = document.getElementById('record-next');
+    const recordCounter = document.getElementById('record-counter');
+    const recordNew = document.getElementById('record-new');
+
+    async function loadRecordsFromDb() {
+      try {
+        const res = await fetch(API_BASE + '/api/db/records/' + FORM_NAME);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data.ok || !data.records || data.records.length === 0) return;
+        dbRecords = data.records;
+        recordNav.style.display = '';
+        // If we loaded a specific record by ?id=, find its index
+        if (loadId) {
+          const idx = dbRecords.findIndex(r => r.session_id === loadId);
+          if (idx >= 0) currentRecordIdx = idx;
+        }
+        updateRecordNav();
+      } catch {}
+    }
+
+    function updateRecordNav() {
+      const total = dbRecords.length;
+      const cur = currentRecordIdx >= 0 ? currentRecordIdx + 1 : '—';
+      recordCounter.textContent = cur + ' / ' + total;
+      recordPrev.disabled = currentRecordIdx <= 0;
+      recordNext.disabled = currentRecordIdx >= total - 1 || currentRecordIdx < 0;
+    }
+
+    async function navigateRecord(direction) {
+      const newIdx = currentRecordIdx + direction;
+      if (newIdx < 0 || newIdx >= dbRecords.length) return;
+      currentRecordIdx = newIdx;
+      await displayRecord(dbRecords[newIdx].session_id);
+      updateRecordNav();
+    }
+
+    async function displayRecord(sessionId) {
+      try {
+        const res = await fetch(API_BASE + '/api/db/record/' + FORM_NAME + '/' + sessionId);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data.ok || !data.record) return;
+
+        SESSION_ID = sessionId;
+        // Reset form and clear table rows
+        document.getElementById('main-form').reset();
+        document.querySelectorAll('table[data-field-name] tbody').forEach(function(tb) { tb.innerHTML = ''; });
+
+        populateForm(data.record);
+        // Recalculate computed columns
+        document.querySelectorAll('table[data-field-name]').forEach(function(table) {
+          var cols = JSON.parse(table.dataset.columns);
+          if (!cols.some(function(c) { return c.type === 'calculated'; })) return;
+          table.querySelectorAll('tbody tr').forEach(function(tr) { recalcRow(table, tr); });
+        });
+      } catch {}
+    }
+
+    recordPrev.addEventListener('click', function() { navigateRecord(-1); });
+    recordNext.addEventListener('click', function() { navigateRecord(1); });
+    recordNew.addEventListener('click', function() {
+      currentRecordIdx = -1;
+      SESSION_ID = crypto.randomUUID ? crypto.randomUUID().split('-')[0] : Math.random().toString(36).slice(2, 10);
+      document.getElementById('main-form').reset();
+      document.querySelectorAll('table[data-field-name] tbody').forEach(function(tb) { tb.innerHTML = ''; });
+      document.querySelectorAll('table[data-field-name]').forEach(function(table) { addTableRow(table.id); });
+      updateRecordNav();
+    });
+
+    // Load records from DB on page load (only if not loading a specific file-based record)
+    if (!loadId) loadRecordsFromDb();
 
     // Collect all form data including tables
     function collectFormData() {

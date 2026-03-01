@@ -1,0 +1,37 @@
+{
+  "title": "Login Form",
+  "formName": "login",
+  "sections": [
+    {
+      "heading": "Credentials",
+      "fields": [
+        {
+          "type": "text",
+          "label": "Username",
+          "name": "username",
+          "placeholder": "Enter username",
+          "required": true
+        },
+        {
+          "type": "password",
+          "label": "Password",
+          "name": "password",
+          "placeholder": "Enter password",
+          "required": true
+        },
+        {
+          "type": "button",
+          "label": "Login",
+          "name": "login_btn",
+          "events": [
+            {
+              "event": "click",
+              "description": "Submit the form",
+              "handler": "document.getElementById('main-form').requestSubmit();"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
