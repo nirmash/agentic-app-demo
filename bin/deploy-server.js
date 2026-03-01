@@ -7,6 +7,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { v4 as uuidv4 } from 'uuid';
+import { execFile } from 'child_process';
 import { syncToDb, resolveSpecPath } from '../src/db-sync.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -90,6 +91,34 @@ if (process.env.DATABASE_URL) {
     }
   });
 }
+
+// API: adcgen CLI execution
+app.post('/api/cli/exec', (req, res) => {
+  const { command } = req.body;
+  if (!command) return res.status(400).json({ error: 'No command provided' });
+
+  // Only allow adcgen subcommands (non-interactive ones)
+  const allowed = ['list', 'list_data', 'rebuild', 'help', '--help', '-h'];
+  const args = command.trim().split(/\s+/);
+  const bin = args[0];
+  if (bin !== 'adcgen' && bin !== 'adc') {
+    return res.status(400).json({ error: 'Only adcgen/adc commands are allowed' });
+  }
+
+  const binPath = path.join(ROOT, 'bin', bin === 'adc' ? 'adc.js' : 'adcgen.js');
+
+  execFile('node', [binPath, ...args.slice(1)], {
+    cwd: ROOT,
+    timeout: 30000,
+    env: { ...process.env, FORCE_COLOR: '0' }
+  }, (err, stdout, stderr) => {
+    const output = (stdout || '') + (stderr || '');
+    if (err && !output) {
+      return res.json({ ok: true, output: `Error: ${err.message}` });
+    }
+    res.json({ ok: true, output: output || '(no output)' });
+  });
+});
 
 // Static files
 app.use(express.static(SITE_DIR));
