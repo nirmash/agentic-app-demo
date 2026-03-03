@@ -478,6 +478,11 @@ ${sectionsHtml}
           const idx = dbRecords.findIndex(r => r.session_id === loadId);
           if (idx >= 0) currentRecordIdx = idx;
         }
+        // Auto-display the first record if none is selected
+        if (currentRecordIdx < 0 && dbRecords.length > 0) {
+          currentRecordIdx = 0;
+          await displayRecord(dbRecords[0].session_id);
+        }
         updateRecordNav();
       } catch {}
     }
@@ -598,9 +603,14 @@ ${sectionsHtml}
           const toast = document.getElementById('toast');
           toast.style.display = 'block';
           setTimeout(() => toast.style.display = 'none', 3000);
-          // Generate new session ID so next submit creates a new record
-          SESSION_ID = crypto.randomUUID ? crypto.randomUUID().split('-')[0] : Math.random().toString(36).slice(2, 10);
-          loadRecordsFromDb();
+          // Refresh records — the saved record will be at index 0 (most recent)
+          const savedId = SESSION_ID;
+          currentRecordIdx = -1;
+          await loadRecordsFromDb();
+          // Find the just-saved record
+          const idx = dbRecords.findIndex(r => r.session_id === savedId);
+          if (idx >= 0) currentRecordIdx = idx;
+          updateRecordNav();
         } else {
           alert('Failed to save data. Is the adcgen server running?');
         }
