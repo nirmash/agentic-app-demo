@@ -268,7 +268,7 @@ ${sectionsHtml}
   <!-- ⚠️ DO NOT EDIT: Form submission and data loading scripts managed by adcgen -->
   <script>
     const FORM_NAME = '${formName}';
-    let SESSION_ID = '${sessionId}';
+    let SESSION_ID = crypto.randomUUID ? crypto.randomUUID().split('-')[0] : Math.random().toString(36).slice(2, 10);
 
     // Auto-detect API base: same origin in production, localhost:3001 in Eleventy dev
     const API_BASE = (location.port === '3001' || location.port === '80' || location.port === '443' || location.port === '')
