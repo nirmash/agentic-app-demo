@@ -90,12 +90,8 @@ export async function syncToDb(formName, data, specPath) {
   const specRaw = fs.readFileSync(specPath, 'utf-8');
   const spec = JSON.parse(specRaw);
 
-  // Create tables if not yet marked
-  if (!spec.dbTableCreated) {
-    await createTables(formName, spec);
-    spec.dbTableCreated = true;
-    fs.writeFileSync(specPath, JSON.stringify(spec, null, 2));
-  }
+  // Ensure tables exist (idempotent — safe to run every time)
+  await createTables(formName, spec);
 
   const { mainColumns, childTables } = schemaFromSpec(spec);
   const meta = data._meta || {};
