@@ -110,7 +110,7 @@
           <label class="FormControl-label" for="bio">Bio <span class="color-fg-danger">*</span></label>
         </div>
         <div class="form-group-body">
-          <input class="form-control input-block" type="text" id="bio" name="bio" placeholder="Enter biography" required>
+          <textarea class="form-control input-block" id="bio" name="bio" placeholder="Enter biography" rows="4" required></textarea>
         </div>
       </div>
       <div class="form-actions mb-3">
@@ -135,7 +135,7 @@
   <!-- ⚠️ DO NOT EDIT: Form submission and data loading scripts managed by adcgen -->
   <script>
     const FORM_NAME = 'speaker';
-    let SESSION_ID = 'a2e09444';
+    let SESSION_ID = crypto.randomUUID ? crypto.randomUUID().split('-')[0] : Math.random().toString(36).slice(2, 10);
 
     // Auto-detect API base: same origin in production, localhost:3001 in Eleventy dev
     const API_BASE = (location.port === '3001' || location.port === '80' || location.port === '443' || location.port === '')
@@ -345,6 +345,11 @@
           const idx = dbRecords.findIndex(r => r.session_id === loadId);
           if (idx >= 0) currentRecordIdx = idx;
         }
+        // Auto-display the first record if none is selected
+        if (currentRecordIdx < 0 && dbRecords.length > 0) {
+          currentRecordIdx = 0;
+          await displayRecord(dbRecords[0].session_id);
+        }
         updateRecordNav();
       } catch {}
     }
@@ -354,7 +359,7 @@
       const cur = currentRecordIdx >= 0 ? currentRecordIdx + 1 : '—';
       recordCounter.textContent = cur + ' / ' + total;
       recordPrev.disabled = currentRecordIdx <= 0;
-      recordNext.disabled = currentRecordIdx >= total - 1 || currentRecordIdx < 0;
+      recordNext.disabled = currentRecordIdx >= total - 1;
     }
 
     async function navigateRecord(direction) {
@@ -465,9 +470,14 @@
           const toast = document.getElementById('toast');
           toast.style.display = 'block';
           setTimeout(() => toast.style.display = 'none', 3000);
-          // Generate new session ID so next submit creates a new record
-          SESSION_ID = crypto.randomUUID ? crypto.randomUUID().split('-')[0] : Math.random().toString(36).slice(2, 10);
-          loadRecordsFromDb();
+          // Refresh records — the saved record will be at index 0 (most recent)
+          const savedId = SESSION_ID;
+          currentRecordIdx = -1;
+          await loadRecordsFromDb();
+          // Find the just-saved record
+          const idx = dbRecords.findIndex(r => r.session_id === savedId);
+          if (idx >= 0) currentRecordIdx = idx;
+          updateRecordNav();
         } else {
           alert('Failed to save data. Is the adcgen server running?');
         }
