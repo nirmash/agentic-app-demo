@@ -487,7 +487,7 @@ ${sectionsHtml}
       const cur = currentRecordIdx >= 0 ? currentRecordIdx + 1 : '—';
       recordCounter.textContent = cur + ' / ' + total;
       recordPrev.disabled = currentRecordIdx <= 0;
-      recordNext.disabled = currentRecordIdx >= total - 1 || currentRecordIdx < 0;
+      recordNext.disabled = currentRecordIdx >= total - 1;
     }
 
     async function navigateRecord(direction) {
