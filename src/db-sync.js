@@ -3,7 +3,7 @@ import path from 'path';
 import { pool } from './db.js';
 
 // Field types that map to SQL columns on the main table
-const DATA_FIELD_TYPES = new Set(['text', 'password', 'dropdown', 'radio', 'checkbox']);
+const DATA_FIELD_TYPES = new Set(['text', 'textarea', 'password', 'dropdown', 'radio', 'checkbox']);
 
 /**
  * Extract column definitions from a _spec.json.
@@ -47,6 +47,13 @@ async function createTables(formName, spec) {
     `CREATE TABLE IF NOT EXISTS "${formName}" (${mainCols.join(', ')})`
   );
 
+  // Add any missing columns (handles schema evolution when fields are added)
+  for (const c of mainColumns) {
+    await pool.query(
+      `ALTER TABLE "${formName}" ADD COLUMN IF NOT EXISTS "${c}" TEXT`
+    ).catch(() => {});
+  }
+
   // Child tables for table-type fields
   for (const child of childTables) {
     // Avoid redundant prefix: if field name already starts with formName, don't double it
@@ -61,6 +68,13 @@ async function createTables(formName, spec) {
     await pool.query(
       `CREATE TABLE IF NOT EXISTS "${childTableName}" (${childCols.join(', ')})`
     );
+
+    // Add any missing columns to child tables
+    for (const c of child.columns) {
+      await pool.query(
+        `ALTER TABLE "${childTableName}" ADD COLUMN IF NOT EXISTS "${c}" TEXT`
+      ).catch(() => {});
+    }
   }
 }
 
