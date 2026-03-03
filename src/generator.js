@@ -15,7 +15,7 @@ Return ONLY valid JSON (no markdown fences, no explanation) matching this schema
       "heading": "Section Title (markdown supported)",
       "fields": [
         {
-          "type": "text|password|dropdown|checkbox|radio|table|button|link",
+          "type": "text|textarea|password|dropdown|checkbox|radio|table|button|link",
           "label": "Field Label",
           "name": "field_name",
           "placeholder": "optional placeholder",
@@ -36,6 +36,7 @@ Return ONLY valid JSON (no markdown fences, no explanation) matching this schema
 }
 
 Rules:
+- Use "textarea" type for multi-line text inputs (e.g. descriptions, comments, notes, addresses). Supports optional "rows" (default 4) to control height.
 - Use "password" type for any password or secret fields (renders as masked input with toggle)
 - Use "link" type for navigation links to other pages. Set "href" to the page path (e.g. "/add_user/" for the add_user page). The "label" is the link text.
 - "options" is only for dropdown and radio types

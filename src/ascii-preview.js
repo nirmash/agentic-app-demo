@@ -57,6 +57,21 @@ function renderRadio(field) {
   return lines;
 }
 
+function renderTextarea(field) {
+  const lines = [];
+  const req = field.required ? ' *' : '';
+  lines.push(boxRow(` ${field.label}${req}`));
+  lines.push(boxRow(` ┌${'─'.repeat(WIDTH - 4)}┐`));
+  const placeholder = field.placeholder || '';
+  const rows = field.rows || 4;
+  lines.push(boxRow(` │ ${placeholder.padEnd(WIDTH - 6)}│`));
+  for (let i = 1; i < Math.min(rows, 4); i++) {
+    lines.push(boxRow(` │${' '.repeat(WIDTH - 4)}│`));
+  }
+  lines.push(boxRow(` └${'─'.repeat(WIDTH - 4)}┘`));
+  return lines;
+}
+
 function renderButton(field) {
   const label = field.label || 'Button';
   const pad = Math.max(0, Math.floor((WIDTH - label.length - 6) / 2));
@@ -116,6 +131,7 @@ export function renderAsciiPreview(spec) {
     for (const field of section.fields || []) {
       switch (field.type) {
         case 'text':     output.push(...renderTextField(field)); break;
+        case 'textarea': output.push(...renderTextarea(field)); break;
         case 'dropdown': output.push(...renderDropdown(field)); break;
         case 'checkbox': output.push(...renderCheckbox(field)); break;
         case 'radio':    output.push(...renderRadio(field)); break;

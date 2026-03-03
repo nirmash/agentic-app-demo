@@ -1,215 +1,9 @@
-import fs from 'fs';
-import path from 'path';
-import { v4 as uuidv4 } from 'uuid';
-
-const SESSION_ID = uuidv4().split('-')[0];
-
-function escapeHtml(str) {
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-function generateFieldHtml(field, indent = '      ') {
-  const req = field.required ? ' required' : '';
-  const id = field.name;
-
-  switch (field.type) {
-    case 'text':
-      return `${indent}<div class="form-group mb-3">
-${indent}  <div class="form-group-header">
-${indent}    <label class="FormControl-label" for="${id}">${escapeHtml(field.label)}${field.required ? ' <span class="color-fg-danger">*</span>' : ''}</label>
-${indent}  </div>
-${indent}  <div class="form-group-body">
-${indent}    <input class="form-control input-block" type="text" id="${id}" name="${id}" placeholder="${escapeHtml(field.placeholder || '')}"${req}>
-${indent}  </div>
-${indent}</div>`;
-
-    case 'textarea':
-      return `${indent}<div class="form-group mb-3">
-${indent}  <div class="form-group-header">
-${indent}    <label class="FormControl-label" for="${id}">${escapeHtml(field.label)}${field.required ? ' <span class="color-fg-danger">*</span>' : ''}</label>
-${indent}  </div>
-${indent}  <div class="form-group-body">
-${indent}    <textarea class="form-control input-block" id="${id}" name="${id}" placeholder="${escapeHtml(field.placeholder || '')}" rows="${field.rows || 4}"${req}></textarea>
-${indent}  </div>
-${indent}</div>`;
-
-    case 'password':
-      return `${indent}<div class="form-group mb-3">
-${indent}  <div class="form-group-header">
-${indent}    <label class="FormControl-label" for="${id}">${escapeHtml(field.label)}${field.required ? ' <span class="color-fg-danger">*</span>' : ''}</label>
-${indent}  </div>
-${indent}  <div class="form-group-body position-relative">
-${indent}    <input class="form-control input-block" type="password" id="${id}" name="${id}" placeholder="${escapeHtml(field.placeholder || '')}"${req}>
-${indent}    <button type="button" class="btn-octicon position-absolute" style="right:8px;top:50%;transform:translateY(-50%)" onclick="const i=document.getElementById('${id}');const t=i.type==='password'?'text':'password';i.type=t;this.innerHTML=t==='password'?'👁':'👁‍🗨'" aria-label="Toggle password visibility">👁</button>
-${indent}  </div>
-${indent}</div>`;
-
-    case 'dropdown':
-      const opts = (field.options || []).map(o =>
-        `${indent}      <option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`
-      ).join('\n');
-      return `${indent}<div class="form-group mb-3">
-${indent}  <div class="form-group-header">
-${indent}    <label class="FormControl-label" for="${id}">${escapeHtml(field.label)}${field.required ? ' <span class="color-fg-danger">*</span>' : ''}</label>
-${indent}  </div>
-${indent}  <div class="form-group-body">
-${indent}    <select class="form-select input-block" id="${id}" name="${id}"${req}>
-${indent}      <option value="">Select...</option>
-${opts}
-${indent}    </select>
-${indent}  </div>
-${indent}</div>`;
-
-    case 'checkbox':
-      if (field.options && field.options.length > 0) {
-        const checks = field.options.map((o, i) =>
-          `${indent}  <div class="form-checkbox">
-${indent}    <label><input type="checkbox" name="${id}" value="${escapeHtml(o)}"> ${escapeHtml(o)}</label>
-${indent}  </div>`
-        ).join('\n');
-        return `${indent}<fieldset class="mb-3">
-${indent}  <legend class="FormControl-label">${escapeHtml(field.label)}</legend>
-${checks}
-${indent}</fieldset>`;
-      }
-      return `${indent}<div class="form-checkbox mb-3">
-${indent}  <label><input type="checkbox" id="${id}" name="${id}"> ${escapeHtml(field.label)}</label>
-${indent}</div>`;
-
-    case 'radio':
-      const radios = (field.options || []).map((o, i) =>
-        `${indent}  <div class="form-checkbox">
-${indent}    <label><input type="radio" name="${id}" value="${escapeHtml(o)}"${i === 0 ? ' checked' : ''}> ${escapeHtml(o)}</label>
-${indent}  </div>`
-      ).join('\n');
-      return `${indent}<fieldset class="mb-3">
-${indent}  <legend class="FormControl-label">${escapeHtml(field.label)}</legend>
-${radios}
-${indent}</fieldset>`;
-
-    case 'button':
-      const btnClass = field.name === 'submit' || field.label?.toLowerCase().includes('submit')
-        ? 'btn btn-primary' : 'btn';
-      const eventAttrs = generateEventAttributes(field);
-      return `${indent}<div class="form-actions mb-3">
-${indent}  <button type="button" class="${btnClass}" id="${id}"${eventAttrs}>${escapeHtml(field.label || 'Button')}</button>
-${indent}</div>`;
-
-    case 'table':
-      return generateTableHtml(field, indent);
-
-    case 'link':
-      const href = field.href || '#';
-      return `${indent}<div class="mb-3">
-${indent}  <a class="Link" href="${escapeHtml(href)}">${escapeHtml(field.label || 'Link')}</a>
-${indent}</div>`;
-
-    default:
-      return `${indent}<!-- Unknown field type: ${field.type} -->`;
-  }
-}
-
-function generateEventAttributes(field) {
-  if (!field.events || field.events.length === 0) return '';
-  // Events are wired via JS below, not inline attributes
-  return '';
-}
-
-function generateTableHtml(field, indent) {
-  const cols = field.columns || [];
-  const rows = field.initialRows || 1;
-  const tableId = `table_${field.name}`;
-  const colsData = escapeHtml(JSON.stringify(cols));
-
-  let header = cols.map(c =>
-    `${indent}        <th class="p-2">${escapeHtml(c.header)}</th>`
-  ).join('\n');
-  header += `\n${indent}        <th class="p-2" style="width:40px"></th>`;
-
-  let bodyRows = '';
-  for (let r = 0; r < rows; r++) {
-    const cells = cols.map(c => {
-      const cellName = `${field.name}_${c.name}_${r}`;
-      const req = c.required ? ' required' : '';
-      switch (c.type) {
-        case 'dropdown':
-          const opts = (c.options || []).map(o => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join('');
-          return `${indent}        <td class="p-2"><select class="form-select" name="${cellName}"${req}><option value="">Select...</option>${opts}</select></td>`;
-        case 'checkbox':
-          return `${indent}        <td class="p-2 text-center"><input type="checkbox" name="${cellName}"${req}></td>`;
-        case 'calculated':
-          return `${indent}        <td class="p-2"><input class="form-control" type="text" name="${cellName}" readonly tabindex="-1" style="background:var(--bgColor-muted,#161b22);color:var(--fgColor-muted,#848d97)"></td>`;
-        default:
-          return `${indent}        <td class="p-2"><input class="form-control" type="text" name="${cellName}" placeholder="${escapeHtml(c.header)}"${req}></td>`;
-      }
-    }).join('\n');
-    const deleteBtn = `${indent}        <td class="p-2 text-center"><button type="button" class="btn-octicon color-fg-danger" onclick="deleteTableRow('${tableId}',this)" title="Delete row">✕</button></td>`;
-    bodyRows += `${indent}      <tr data-row="${r}">\n${cells}\n${deleteBtn}\n${indent}      </tr>\n`;
-  }
-
-  return `${indent}<div class="mb-3">
-${indent}  <label class="FormControl-label">${escapeHtml(field.label)}</label>
-${indent}  <div class="overflow-auto">
-${indent}    <table class="table-bordered width-full" id="${tableId}" data-field-name="${field.name}" data-columns="${colsData}" data-row-count="${rows}">
-${indent}      <thead class="color-bg-subtle">
-${indent}        <tr>
-${header}
-${indent}        </tr>
-${indent}      </thead>
-${indent}      <tbody>
-${bodyRows}${indent}      </tbody>
-${indent}    </table>
-${indent}  </div>
-${indent}  <div class="mt-2">
-${indent}    <button type="button" class="btn btn-sm" onclick="addTableRow('${tableId}')">+ Add Row</button>
-${indent}  </div>
-${indent}</div>`;
-}
-
-function generateEventHandlerScript(spec) {
-  const handlers = [];
-
-  for (const section of spec.sections || []) {
-    for (const field of section.fields || []) {
-      if (!field.events || field.events.length === 0) continue;
-      for (const evt of field.events) {
-        handlers.push(`  // ${field.label}: ${evt.description || evt.event}
-  document.getElementById('${field.name}')?.addEventListener('${evt.event}', function(e) {
-    ${evt.handler || `console.log('${field.name} ${evt.event}');`}
-  });`);
-      }
-    }
-  }
-
-  return handlers.join('\n\n');
-}
-
-export function generateFormHtml(spec) {
-  const sessionId = SESSION_ID;
-  const formName = spec.formName || 'form';
-
-  let sectionsHtml = '';
-  for (const section of spec.sections || []) {
-    if (section.heading) {
-      sectionsHtml += `\n      <!-- ✅ SAFE TO EDIT: Section headings, text, and links -->
-      <h3 class="h3 mb-3 pb-2 border-bottom">${escapeHtml(section.heading)}</h3>
-      <!-- END SAFE TO EDIT -->\n`;
-    }
-    sectionsHtml += `      <!-- ⚠️ DO NOT EDIT: Form fields managed by adcgen. Use "adcgen edit" to change. -->\n`;
-    for (const field of section.fields || []) {
-      sectionsHtml += generateFieldHtml(field) + '\n';
-    }
-    sectionsHtml += `      <!-- END DO NOT EDIT -->\n`;
-  }
-
-  const eventScript = generateEventHandlerScript(spec);
-
-  return `<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-color-mode="dark" data-dark-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${escapeHtml(spec.title)}</title>
+  <title>Add/Edit Speaker</title>
   <link rel="stylesheet" href="https://unpkg.com/@primer/css@21.3.1/dist/primer.css">
   <!-- ⚠️ DO NOT EDIT: Styles managed by adcgen -->
   <style>
@@ -245,12 +39,85 @@ export function generateFormHtml(spec) {
 
   <div class="form-container">
     <div class="form-header">
-      <h1 class="h2">${escapeHtml(spec.title)}</h1>
+      <h1 class="h2">Add/Edit Speaker</h1>
     </div>
 
     <!-- You may add text, headings, and links around sections. Do NOT edit form fields — use "adcgen edit" instead. -->
     <form id="main-form">
-${sectionsHtml}
+
+      <!-- ✅ SAFE TO EDIT: Section headings, text, and links -->
+      <h3 class="h3 mb-3 pb-2 border-bottom">Speaker Information</h3>
+      <!-- END SAFE TO EDIT -->
+      <!-- ⚠️ DO NOT EDIT: Form fields managed by adcgen. Use "adcgen edit" to change. -->
+      <div class="form-group mb-3">
+        <div class="form-group-header">
+          <label class="FormControl-label" for="first_name">First Name <span class="color-fg-danger">*</span></label>
+        </div>
+        <div class="form-group-body">
+          <input class="form-control input-block" type="text" id="first_name" name="first_name" placeholder="Enter first name" required>
+        </div>
+      </div>
+      <div class="form-group mb-3">
+        <div class="form-group-header">
+          <label class="FormControl-label" for="last_name">Last Name <span class="color-fg-danger">*</span></label>
+        </div>
+        <div class="form-group-body">
+          <input class="form-control input-block" type="text" id="last_name" name="last_name" placeholder="Enter last name" required>
+        </div>
+      </div>
+      <div class="form-group mb-3">
+        <div class="form-group-header">
+          <label class="FormControl-label" for="title">Title <span class="color-fg-danger">*</span></label>
+        </div>
+        <div class="form-group-body">
+          <input class="form-control input-block" type="text" id="title" name="title" placeholder="Enter title" required>
+        </div>
+      </div>
+      <div class="form-group mb-3">
+        <div class="form-group-header">
+          <label class="FormControl-label" for="email">Email <span class="color-fg-danger">*</span></label>
+        </div>
+        <div class="form-group-body">
+          <input class="form-control input-block" type="text" id="email" name="email" placeholder="Enter email" required>
+        </div>
+      </div>
+      <div class="form-group mb-3">
+        <div class="form-group-header">
+          <label class="FormControl-label" for="personal_website">Personal Website</label>
+        </div>
+        <div class="form-group-body">
+          <input class="form-control input-block" type="text" id="personal_website" name="personal_website" placeholder="Enter personal website URL">
+        </div>
+      </div>
+      <div class="form-group mb-3">
+        <div class="form-group-header">
+          <label class="FormControl-label" for="x_profile">X Profile</label>
+        </div>
+        <div class="form-group-body">
+          <input class="form-control input-block" type="text" id="x_profile" name="x_profile" placeholder="Enter X profile URL">
+        </div>
+      </div>
+      <div class="form-group mb-3">
+        <div class="form-group-header">
+          <label class="FormControl-label" for="linkedin_profile">LinkedIn Profile</label>
+        </div>
+        <div class="form-group-body">
+          <input class="form-control input-block" type="text" id="linkedin_profile" name="linkedin_profile" placeholder="Enter LinkedIn profile URL">
+        </div>
+      </div>
+      <div class="form-group mb-3">
+        <div class="form-group-header">
+          <label class="FormControl-label" for="bio">Bio <span class="color-fg-danger">*</span></label>
+        </div>
+        <div class="form-group-body">
+          <textarea class="form-control input-block" id="bio" name="bio" placeholder="Enter biography" rows="4" required></textarea>
+        </div>
+      </div>
+      <div class="form-actions mb-3">
+        <button type="button" class="btn btn-primary" id="submit_button">Submit</button>
+      </div>
+      <!-- END DO NOT EDIT -->
+
     </form>
 
     <!-- Record navigation bar -->
@@ -267,8 +134,8 @@ ${sectionsHtml}
 
   <!-- ⚠️ DO NOT EDIT: Form submission and data loading scripts managed by adcgen -->
   <script>
-    const FORM_NAME = '${formName}';
-    let SESSION_ID = '${sessionId}';
+    const FORM_NAME = 'speaker';
+    let SESSION_ID = '980ea118';
 
     // Auto-detect API base: same origin in production, localhost:3001 in Eleventy dev
     const API_BASE = (location.port === '3001' || location.port === '80' || location.port === '443' || location.port === '')
@@ -321,7 +188,7 @@ ${sectionsHtml}
       delTd.className = 'p-2 text-center';
       const delBtn = document.createElement('button');
       delBtn.type = 'button'; delBtn.className = 'btn-octicon color-fg-danger';
-      delBtn.title = 'Delete row'; delBtn.textContent = '\\u2715';
+      delBtn.title = 'Delete row'; delBtn.textContent = '\u2715';
       delBtn.onclick = function() { deleteTableRow(tableId, this); };
       delTd.appendChild(delBtn); tr.appendChild(delTd);
       tbody.appendChild(tr);
@@ -360,7 +227,7 @@ ${sectionsHtml}
             el.value = (result == null ? '' : result);
           } else {
             // Template mode: replace {col_name} placeholders
-            el.value = formula.replace(/\\{(\\w+)\\}/g, function(m, name) { return vals[name] || ''; });
+            el.value = formula.replace(/\{(\w+)\}/g, function(m, name) { return vals[name] || ''; });
           }
         } catch(e) { el.value = ''; }
       });
@@ -542,7 +409,7 @@ ${sectionsHtml}
 
       for (const [key, value] of formData.entries()) {
         // Handle table fields: fieldname_colname_rowindex
-        const tableMatch = key.match(/^(.+?)_(.+?)_(\\d+)$/);
+        const tableMatch = key.match(/^(.+?)_(.+?)_(\d+)$/);
         if (tableMatch) {
           const [, table, col, row] = tableMatch;
           if (!data[table]) data[table] = [];
@@ -607,101 +474,11 @@ ${sectionsHtml}
     });
 
     // Custom event handlers
-${eventScript}
+  // Submit: Submit the form
+  document.getElementById('submit_button')?.addEventListener('click', function(e) {
+    document.getElementById('main-form').requestSubmit();
+  });
   </script>
   <!-- END DO NOT EDIT -->
 </body>
-</html>`;
-}
-
-export function buildEleventySite(spec, outputDir) {
-  const siteDir = path.join(outputDir, '_site_src');
-  const dataDir = path.join(outputDir, '_data');
-
-  // Ensure directories
-  fs.mkdirSync(siteDir, { recursive: true });
-  fs.mkdirSync(dataDir, { recursive: true });
-
-  // Write the HTML form (additive — doesn't remove existing forms)
-  const formHtml = generateFormHtml(spec);
-  const fileName = `${spec.formName || 'form'}.html`;
-  fs.writeFileSync(path.join(siteDir, fileName), formHtml);
-
-  // Regenerate index page listing all forms
-  generateIndexPage(siteDir);
-
-  // Write Eleventy config
-  const eleventyConfig = `export default function(eleventyConfig) {
-  eleventyConfig.setUseGitIgnore(false);
-
-  return {
-    dir: {
-      input: "_site_src",
-      output: "_site"
-    },
-    htmlTemplateEngine: false,
-    markdownTemplateEngine: false
-  };
-};
-`;
-  fs.writeFileSync(path.join(outputDir, 'eleventy.config.js'), eleventyConfig);
-
-  // Save the form spec for reference
-  fs.writeFileSync(
-    path.join(dataDir, `${spec.formName || 'form'}_spec.json`),
-    JSON.stringify(spec, null, 2)
-  );
-
-  return { siteDir, fileName, dataDir };
-}
-
-export function generateIndexPage(siteDir) {
-  const forms = fs.readdirSync(siteDir)
-    .filter(f => f.endsWith('.html') && f !== 'index.html')
-    .map(f => {
-      const name = f.replace('.html', '');
-      const label = name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-      return { file: name, label };
-    });
-
-  const links = forms.map(f =>
-    `        <li class="Box-row">
-          <a href="/${f.file}/" class="Link d-flex flex-items-center">
-            <span class="mr-2">📋</span>
-            <span class="flex-auto">${f.label}</span>
-            <span class="Label Label--secondary">${f.file}.html</span>
-          </a>
-        </li>`
-  ).join('\n');
-
-  const html = `<!DOCTYPE html>
-<html lang="en" data-color-mode="dark" data-dark-theme="dark">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>adcgen — Forms</title>
-  <link rel="stylesheet" href="https://unpkg.com/@primer/css@21.3.1/dist/primer.css">
-  <style>
-    body { background-color: var(--bgColor-default, #0d1117); color: var(--fgColor-default, #e6edf3); }
-    .container { max-width: 768px; margin: 2rem auto; }
-    .Box-row a { text-decoration: none; padding: 12px 16px; }
-    .Box-row:hover { background: var(--bgColor-muted, #161b22); }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="Subhead mb-4">
-      <h1 class="Subhead-heading">📝 adcgen Forms</h1>
-      <div class="Subhead-description">${forms.length} form${forms.length !== 1 ? 's' : ''} generated</div>
-    </div>
-    <div class="Box">
-      <ul class="list-style-none">
-${links}
-      </ul>
-    </div>
-  </div>
-</body>
-</html>`;
-
-  fs.writeFileSync(path.join(siteDir, 'index.html'), html);
-}
+</html>

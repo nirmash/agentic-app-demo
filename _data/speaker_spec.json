@@ -1,0 +1,141 @@
+{
+  "title": "Add/Edit Speaker",
+  "formName": "speaker",
+  "sections": [
+    {
+      "heading": "Speaker Information",
+      "fields": [
+        {
+          "type": "text",
+          "label": "First Name",
+          "name": "first_name",
+          "placeholder": "Enter first name",
+          "required": true,
+          "options": [],
+          "href": "",
+          "columns": [],
+          "initialRows": 0,
+          "events": []
+        },
+        {
+          "type": "text",
+          "label": "Last Name",
+          "name": "last_name",
+          "placeholder": "Enter last name",
+          "required": true,
+          "options": [],
+          "href": "",
+          "columns": [],
+          "initialRows": 0,
+          "events": []
+        },
+        {
+          "type": "text",
+          "label": "Title",
+          "name": "title",
+          "placeholder": "Enter title",
+          "required": true,
+          "options": [],
+          "href": "",
+          "columns": [],
+          "initialRows": 0,
+          "events": []
+        },
+        {
+          "type": "text",
+          "label": "Email",
+          "name": "email",
+          "placeholder": "Enter email",
+          "required": true,
+          "options": [],
+          "href": "",
+          "columns": [],
+          "initialRows": 0,
+          "validation": {
+            "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+            "message": "Please enter a valid email address."
+          },
+          "events": []
+        },
+        {
+          "type": "text",
+          "label": "Personal Website",
+          "name": "personal_website",
+          "placeholder": "Enter personal website URL",
+          "required": false,
+          "options": [],
+          "href": "",
+          "columns": [],
+          "initialRows": 0,
+          "validation": {
+            "pattern": "^(https?:\\/\\/)?([\\w\\-]+\\.)+[\\w\\-]+(\\/[\\w\\-\\._~:\\/?#[\\]@!$&'()*+,;=]*)?$",
+            "message": "Please enter a valid URL."
+          },
+          "events": []
+        },
+        {
+          "type": "text",
+          "label": "X Profile",
+          "name": "x_profile",
+          "placeholder": "Enter X profile URL",
+          "required": false,
+          "options": [],
+          "href": "",
+          "columns": [],
+          "initialRows": 0,
+          "validation": {
+            "pattern": "^(https?:\\/\\/)?([\\w\\-]+\\.)+[\\w\\-]+(\\/[\\w\\-\\._~:\\/?#[\\]@!$&'()*+,;=]*)?$",
+            "message": "Please enter a valid URL."
+          },
+          "events": []
+        },
+        {
+          "type": "text",
+          "label": "LinkedIn Profile",
+          "name": "linkedin_profile",
+          "placeholder": "Enter LinkedIn profile URL",
+          "required": false,
+          "options": [],
+          "href": "",
+          "columns": [],
+          "initialRows": 0,
+          "validation": {
+            "pattern": "^(https?:\\/\\/)?([\\w\\-]+\\.)+[\\w\\-]+(\\/[\\w\\-\\._~:\\/?#[\\]@!$&'()*+,;=]*)?$",
+            "message": "Please enter a valid URL."
+          },
+          "events": []
+        },
+        {
+          "type": "textarea",
+          "label": "Bio",
+          "name": "bio",
+          "placeholder": "Enter biography",
+          "required": true,
+          "options": [],
+          "href": "",
+          "columns": [],
+          "initialRows": 0,
+          "events": []
+        },
+        {
+          "type": "button",
+          "label": "Submit",
+          "name": "submit_button",
+          "placeholder": "",
+          "required": false,
+          "options": [],
+          "href": "",
+          "columns": [],
+          "initialRows": 0,
+          "events": [
+            {
+              "event": "click",
+              "description": "Submit the form",
+              "handler": "document.getElementById('main-form').requestSubmit();"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
