@@ -1,0 +1,29 @@
+{
+  "full_name": "Jane Smith",
+  "email": "jane.smith@techconf.io",
+  "bio": "AI researcher with 10 years of experience in machine learning and neural networks. Published over 30 papers in top-tier conferences. Currently leading the AI team at DeepMind Labs.",
+  "topic": "AI in Production: From Research to Real-World Deployment",
+  "experience_level": "Advanced",
+  "needs_travel": true,
+  "preferred_session": "Morning",
+  "password": "s3cur3Pass!",
+  "previous_talks": [
+    {
+      "talk_title": "Scaling ML Pipelines",
+      "conference_name": "MLConf 2024",
+      "year": "2024",
+      "rating": ""
+    },
+    {
+      "talk_title": "Transformer Architectures Demystified",
+      "conference_name": "NeurIPS Workshop",
+      "year": "2023",
+      "rating": ""
+    }
+  ],
+  "_meta": {
+    "formName": "speaker",
+    "sessionId": "abc12345",
+    "submittedAt": "2025-01-15T09:30:00Z"
+  }
+}

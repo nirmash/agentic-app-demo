@@ -2,6 +2,9 @@ node_modules/
 .adcgen.pid
 .adcgen-server.log
 .adcgen-eleventy.log
-# Ignore user data files but track spec files
+# Ignore user data files but track spec and seed data
 _data/*.json
 !_data/*_spec.json
+!_data/speaker_*.json
+!_data/attendee_*.json
+!_data/session_*.json

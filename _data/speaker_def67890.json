@@ -1,0 +1,35 @@
+{
+  "full_name": "Bob Chen",
+  "email": "bob.chen@devops.cloud",
+  "bio": "DevOps engineer and cloud architect specializing in Kubernetes, CI/CD pipelines, and infrastructure as code. Speaker at KubeCon and DevOpsDays. Author of 'Cloud Native Patterns'.",
+  "topic": "CI/CD Best Practices for Cloud Native Applications",
+  "experience_level": "Expert",
+  "needs_travel": false,
+  "preferred_session": "Afternoon",
+  "password": "D3v0ps#Guru",
+  "previous_talks": [
+    {
+      "talk_title": "Kubernetes at Scale",
+      "conference_name": "KubeCon NA",
+      "year": "2024",
+      "rating": ""
+    },
+    {
+      "talk_title": "GitOps in Practice",
+      "conference_name": "DevOpsDays NYC",
+      "year": "2023",
+      "rating": ""
+    },
+    {
+      "talk_title": "Terraform Anti-Patterns",
+      "conference_name": "HashiConf",
+      "year": "2023",
+      "rating": ""
+    }
+  ],
+  "_meta": {
+    "formName": "speaker",
+    "sessionId": "def67890",
+    "submittedAt": "2025-01-16T14:15:00Z"
+  }
+}

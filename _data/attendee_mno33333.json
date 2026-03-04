@@ -1,0 +1,35 @@
+{
+  "first_name": "Charlie",
+  "last_name": "Brown",
+  "email": "charlie.brown@university.edu",
+  "company": "",
+  "role": "Student",
+  "dietary_restrictions": ["Vegan", "Gluten-Free"],
+  "session_preference": "Talk",
+  "notes": "CS senior writing thesis on cloud architectures. Attending on student scholarship.",
+  "sessions_to_attend": [
+    {
+      "session_name": "AI in Production",
+      "time_slot": "9AM",
+      "priority": "Must-attend",
+      "full_name": ""
+    },
+    {
+      "session_name": "Modern CSS Layouts",
+      "time_slot": "11AM",
+      "priority": "Want-to",
+      "full_name": ""
+    },
+    {
+      "session_name": "CI/CD Best Practices",
+      "time_slot": "2PM",
+      "priority": "Optional",
+      "full_name": ""
+    }
+  ],
+  "_meta": {
+    "formName": "attendee",
+    "sessionId": "mno33333",
+    "submittedAt": "2025-01-19T10:20:00Z"
+  }
+}

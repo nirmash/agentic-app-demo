@@ -1,0 +1,16 @@
+{
+  "title": "Modern CSS Layouts: Beyond Flexbox and Grid",
+  "description": "Discover the latest CSS layout techniques including container queries, subgrid, and the :has() selector. Learn how to build responsive, accessible layouts with less code and better performance.",
+  "speaker_name": "Maria Garcia",
+  "room": "Room A",
+  "capacity": "150",
+  "date": "2025-03-16",
+  "start_time": "11:00",
+  "duration_minutes": "45",
+  "session_type": "Talk",
+  "_meta": {
+    "formName": "session",
+    "sessionId": "yza77777",
+    "submittedAt": "2025-01-14T13:00:00Z"
+  }
+}

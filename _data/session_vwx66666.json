@@ -1,0 +1,16 @@
+{
+  "title": "CI/CD Best Practices for Cloud Native Applications",
+  "description": "A hands-on workshop covering modern CI/CD pipelines with GitHub Actions, ArgoCD, and Kubernetes. Participants will build a complete pipeline from scratch including automated testing, container builds, and progressive deployments.",
+  "speaker_name": "Bob Chen",
+  "room": "Workshop Area",
+  "capacity": "50",
+  "date": "2025-03-15",
+  "start_time": "14:00",
+  "duration_minutes": "120",
+  "session_type": "Workshop",
+  "_meta": {
+    "formName": "session",
+    "sessionId": "vwx66666",
+    "submittedAt": "2025-01-14T12:30:00Z"
+  }
+}

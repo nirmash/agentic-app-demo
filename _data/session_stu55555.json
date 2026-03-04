@@ -1,0 +1,16 @@
+{
+  "title": "AI in Production: From Research to Real-World Deployment",
+  "description": "This keynote explores the challenges and strategies for deploying AI models in production environments. Topics include model serving architectures, monitoring for drift, A/B testing ML models, and building reliable ML pipelines at scale.",
+  "speaker_name": "Jane Smith",
+  "room": "Main Hall",
+  "capacity": "500",
+  "date": "2025-03-15",
+  "start_time": "09:00",
+  "duration_minutes": "90",
+  "session_type": "Keynote",
+  "_meta": {
+    "formName": "session",
+    "sessionId": "stu55555",
+    "submittedAt": "2025-01-14T12:00:00Z"
+  }
+}

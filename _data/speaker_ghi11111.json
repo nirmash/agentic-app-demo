@@ -1,0 +1,23 @@
+{
+  "full_name": "Maria Garcia",
+  "email": "maria.garcia@frontend.dev",
+  "bio": "Frontend developer passionate about modern CSS, web animations, and accessible design. Google Developer Expert for Web Technologies.",
+  "topic": "Modern CSS Layouts: Beyond Flexbox and Grid",
+  "experience_level": "Intermediate",
+  "needs_travel": true,
+  "preferred_session": "Evening",
+  "password": "Css!Master42",
+  "previous_talks": [
+    {
+      "talk_title": "CSS Container Queries in Production",
+      "conference_name": "CSSConf EU",
+      "year": "2025",
+      "rating": ""
+    }
+  ],
+  "_meta": {
+    "formName": "speaker",
+    "sessionId": "ghi11111",
+    "submittedAt": "2025-01-17T11:00:00Z"
+  }
+}

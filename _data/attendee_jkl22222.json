@@ -1,0 +1,29 @@
+{
+  "first_name": "Alice",
+  "last_name": "Johnson",
+  "email": "alice.johnson@techcorp.com",
+  "company": "TechCorp",
+  "role": "Developer",
+  "dietary_restrictions": ["Vegetarian"],
+  "session_preference": "Workshop",
+  "notes": "Looking forward to the AI and DevOps tracks. Would love to connect with speakers after sessions.",
+  "sessions_to_attend": [
+    {
+      "session_name": "AI in Production",
+      "time_slot": "9AM",
+      "priority": "Must-attend",
+      "full_name": ""
+    },
+    {
+      "session_name": "CI/CD Best Practices",
+      "time_slot": "2PM",
+      "priority": "Want-to",
+      "full_name": ""
+    }
+  ],
+  "_meta": {
+    "formName": "attendee",
+    "sessionId": "jkl22222",
+    "submittedAt": "2025-01-18T08:45:00Z"
+  }
+}

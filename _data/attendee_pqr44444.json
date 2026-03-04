@@ -1,0 +1,23 @@
+{
+  "first_name": "Diana",
+  "last_name": "Prince",
+  "email": "diana.prince@bigco.com",
+  "company": "BigCo",
+  "role": "Manager",
+  "dietary_restrictions": [],
+  "session_preference": "Panel",
+  "notes": "Evaluating conference topics for team training budget allocation.",
+  "sessions_to_attend": [
+    {
+      "session_name": "CI/CD Best Practices",
+      "time_slot": "2PM",
+      "priority": "Must-attend",
+      "full_name": ""
+    }
+  ],
+  "_meta": {
+    "formName": "attendee",
+    "sessionId": "pqr44444",
+    "submittedAt": "2025-01-20T16:30:00Z"
+  }
+}
