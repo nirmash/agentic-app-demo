@@ -1,0 +1,111 @@
+{
+  "title": "Session Management",
+  "formName": "session",
+  "sections": [
+    {
+      "heading": "Session Details",
+      "fields": [
+        {
+          "type": "text",
+          "label": "Title",
+          "name": "title",
+          "placeholder": "Session title",
+          "required": true
+        },
+        {
+          "type": "textarea",
+          "label": "Description",
+          "name": "description",
+          "placeholder": "Describe the session content and objectives",
+          "required": true,
+          "rows": 4
+        },
+        {
+          "type": "text",
+          "label": "Speaker Name",
+          "name": "speaker_name",
+          "placeholder": "Primary speaker",
+          "required": true
+        },
+        {
+          "type": "dropdown",
+          "label": "Room",
+          "name": "room",
+          "options": [
+            "Main Hall",
+            "Room A",
+            "Room B",
+            "Room C",
+            "Workshop Area"
+          ],
+          "required": true
+        },
+        {
+          "type": "text",
+          "label": "Capacity",
+          "name": "capacity",
+          "placeholder": "Maximum attendees"
+        },
+        {
+          "type": "text",
+          "label": "Date",
+          "name": "date",
+          "placeholder": "YYYY-MM-DD"
+        },
+        {
+          "type": "text",
+          "label": "Start Time",
+          "name": "start_time",
+          "placeholder": "HH:MM"
+        },
+        {
+          "type": "dropdown",
+          "label": "Duration (minutes)",
+          "name": "duration_minutes",
+          "options": [
+            "30",
+            "45",
+            "60",
+            "90",
+            "120"
+          ]
+        },
+        {
+          "type": "radio",
+          "label": "Session Type",
+          "name": "session_type",
+          "options": [
+            "Keynote",
+            "Talk",
+            "Workshop",
+            "Panel",
+            "Lightning"
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Actions",
+      "fields": [
+        {
+          "type": "button",
+          "label": "Check Availability",
+          "name": "check_availability_btn",
+          "events": [
+            {
+              "event": "click",
+              "description": "Check room availability",
+              "handler": "const room = document.getElementById('room').value; const date = document.getElementById('date').value; if (!room || !date) { alert('Please select a room and date first'); } else { alert('✅ ' + room + ' is available on ' + date); }"
+            }
+          ]
+        },
+        {
+          "type": "link",
+          "label": "View Speakers →",
+          "name": "speaker_link",
+          "href": "/speaker/"
+        }
+      ]
+    }
+  ]
+}

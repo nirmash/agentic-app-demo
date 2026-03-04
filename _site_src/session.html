@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>User Information Form</title>
+  <title>Session Management</title>
   <link rel="stylesheet" href="https://unpkg.com/@primer/css@21.3.1/dist/primer.css">
   <!-- ⚠️ DO NOT EDIT: Styles managed by adcgen -->
   <style>
@@ -39,46 +39,123 @@
 
   <div class="form-container">
     <div class="form-header">
-      <h1 class="h2">User Information Form</h1>
+      <h1 class="h2">Session Management</h1>
     </div>
 
     <!-- You may add text, headings, and links around sections. Do NOT edit form fields — use "adcgen edit" instead. -->
     <form id="main-form">
 
       <!-- ✅ SAFE TO EDIT: Section headings, text, and links -->
-      <h3 class="h3 mb-3 pb-2 border-bottom">Enter User Details</h3>
+      <h3 class="h3 mb-3 pb-2 border-bottom">Session Details</h3>
       <!-- END SAFE TO EDIT -->
       <!-- ⚠️ DO NOT EDIT: Form fields managed by adcgen. Use "adcgen edit" to change. -->
-      <div class="mb-3">
-        <label class="FormControl-label">User Details Table</label>
-        <div class="overflow-auto">
-          <table class="table-bordered width-full" id="table_user_details_table" data-field-name="user_details_table" data-columns="[{&quot;header&quot;:&quot;First Name&quot;,&quot;type&quot;:&quot;text&quot;,&quot;name&quot;:&quot;first_name&quot;,&quot;required&quot;:true},{&quot;header&quot;:&quot;Last Name&quot;,&quot;type&quot;:&quot;text&quot;,&quot;name&quot;:&quot;last_name&quot;,&quot;required&quot;:true},{&quot;header&quot;:&quot;Email&quot;,&quot;type&quot;:&quot;text&quot;,&quot;name&quot;:&quot;email&quot;,&quot;required&quot;:true},{&quot;header&quot;:&quot;Generated ID&quot;,&quot;type&quot;:&quot;calculated&quot;,&quot;name&quot;:&quot;generated_id&quot;,&quot;formula&quot;:&quot;{first_name}_{last_name}_{email.split('@')[0]}&quot;}]" data-row-count="1">
-            <thead class="color-bg-subtle">
-              <tr>
-              <th class="p-2">First Name</th>
-              <th class="p-2">Last Name</th>
-              <th class="p-2">Email</th>
-              <th class="p-2">Generated ID</th>
-              <th class="p-2" style="width:40px"></th>
-              </tr>
-            </thead>
-            <tbody>
-            <tr data-row="0">
-              <td class="p-2"><input class="form-control" type="text" name="user_details_table_first_name_0" placeholder="First Name" required></td>
-              <td class="p-2"><input class="form-control" type="text" name="user_details_table_last_name_0" placeholder="Last Name" required></td>
-              <td class="p-2"><input class="form-control" type="text" name="user_details_table_email_0" placeholder="Email" required></td>
-              <td class="p-2"><input class="form-control" type="text" name="user_details_table_generated_id_0" readonly tabindex="-1" style="background:var(--bgColor-muted,#161b22);color:var(--fgColor-muted,#848d97)"></td>
-              <td class="p-2 text-center"><button type="button" class="btn-octicon color-fg-danger" onclick="deleteTableRow('table_user_details_table',this)" title="Delete row">✕</button></td>
-            </tr>
-            </tbody>
-          </table>
+      <div class="form-group mb-3">
+        <div class="form-group-header">
+          <label class="FormControl-label" for="title">Title <span class="color-fg-danger">*</span></label>
         </div>
-        <div class="mt-2">
-          <button type="button" class="btn btn-sm" onclick="addTableRow('table_user_details_table')">+ Add Row</button>
+        <div class="form-group-body">
+          <input class="form-control input-block" type="text" id="title" name="title" placeholder="Session title" required>
         </div>
       </div>
+      <div class="form-group mb-3">
+        <div class="form-group-header">
+          <label class="FormControl-label" for="description">Description <span class="color-fg-danger">*</span></label>
+        </div>
+        <div class="form-group-body">
+          <textarea class="form-control input-block" id="description" name="description" placeholder="Describe the session content and objectives" rows="4" required></textarea>
+        </div>
+      </div>
+      <div class="form-group mb-3">
+        <div class="form-group-header">
+          <label class="FormControl-label" for="speaker_name">Speaker Name <span class="color-fg-danger">*</span></label>
+        </div>
+        <div class="form-group-body">
+          <input class="form-control input-block" type="text" id="speaker_name" name="speaker_name" placeholder="Primary speaker" required>
+        </div>
+      </div>
+      <div class="form-group mb-3">
+        <div class="form-group-header">
+          <label class="FormControl-label" for="room">Room <span class="color-fg-danger">*</span></label>
+        </div>
+        <div class="form-group-body">
+          <select class="form-select input-block" id="room" name="room" required>
+            <option value="">Select...</option>
+            <option value="Main Hall">Main Hall</option>
+            <option value="Room A">Room A</option>
+            <option value="Room B">Room B</option>
+            <option value="Room C">Room C</option>
+            <option value="Workshop Area">Workshop Area</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group mb-3">
+        <div class="form-group-header">
+          <label class="FormControl-label" for="capacity">Capacity</label>
+        </div>
+        <div class="form-group-body">
+          <input class="form-control input-block" type="text" id="capacity" name="capacity" placeholder="Maximum attendees">
+        </div>
+      </div>
+      <div class="form-group mb-3">
+        <div class="form-group-header">
+          <label class="FormControl-label" for="date">Date</label>
+        </div>
+        <div class="form-group-body">
+          <input class="form-control input-block" type="text" id="date" name="date" placeholder="YYYY-MM-DD">
+        </div>
+      </div>
+      <div class="form-group mb-3">
+        <div class="form-group-header">
+          <label class="FormControl-label" for="start_time">Start Time</label>
+        </div>
+        <div class="form-group-body">
+          <input class="form-control input-block" type="text" id="start_time" name="start_time" placeholder="HH:MM">
+        </div>
+      </div>
+      <div class="form-group mb-3">
+        <div class="form-group-header">
+          <label class="FormControl-label" for="duration_minutes">Duration (minutes)</label>
+        </div>
+        <div class="form-group-body">
+          <select class="form-select input-block" id="duration_minutes" name="duration_minutes">
+            <option value="">Select...</option>
+            <option value="30">30</option>
+            <option value="45">45</option>
+            <option value="60">60</option>
+            <option value="90">90</option>
+            <option value="120">120</option>
+          </select>
+        </div>
+      </div>
+      <fieldset class="mb-3">
+        <legend class="FormControl-label">Session Type</legend>
+        <div class="form-checkbox">
+          <label><input type="radio" name="session_type" value="Keynote" checked> Keynote</label>
+        </div>
+        <div class="form-checkbox">
+          <label><input type="radio" name="session_type" value="Talk"> Talk</label>
+        </div>
+        <div class="form-checkbox">
+          <label><input type="radio" name="session_type" value="Workshop"> Workshop</label>
+        </div>
+        <div class="form-checkbox">
+          <label><input type="radio" name="session_type" value="Panel"> Panel</label>
+        </div>
+        <div class="form-checkbox">
+          <label><input type="radio" name="session_type" value="Lightning"> Lightning</label>
+        </div>
+      </fieldset>
+      <!-- END DO NOT EDIT -->
+
+      <!-- ✅ SAFE TO EDIT: Section headings, text, and links -->
+      <h3 class="h3 mb-3 pb-2 border-bottom">Actions</h3>
+      <!-- END SAFE TO EDIT -->
+      <!-- ⚠️ DO NOT EDIT: Form fields managed by adcgen. Use "adcgen edit" to change. -->
       <div class="form-actions mb-3">
-        <button type="button" class="btn btn-primary" id="submit_button">Submit</button>
+        <button type="button" class="btn" id="check_availability_btn">Check Availability</button>
+      </div>
+      <div class="mb-3">
+        <a class="Link" href="/speaker/">View Speakers →</a>
       </div>
       <!-- END DO NOT EDIT -->
 
@@ -98,7 +175,7 @@
 
   <!-- ⚠️ DO NOT EDIT: Form submission and data loading scripts managed by adcgen -->
   <script>
-    const FORM_NAME = 'contacts';
+    const FORM_NAME = 'session';
     let SESSION_ID = crypto.randomUUID ? crypto.randomUUID().split('-')[0] : Math.random().toString(36).slice(2, 10);
 
     // Auto-detect API base: same origin in production, localhost:3001 in Eleventy dev
@@ -451,9 +528,9 @@
     });
 
     // Custom event handlers
-  // Submit: Submit the form
-  document.getElementById('submit_button')?.addEventListener('click', function(e) {
-    document.getElementById('main-form').requestSubmit();
+  // Check Availability: Check room availability
+  document.getElementById('check_availability_btn')?.addEventListener('click', function(e) {
+    const room = document.getElementById('room').value; const date = document.getElementById('date').value; if (!room || !date) { alert('Please select a room and date first'); } else { alert('✅ ' + room + ' is available on ' + date); }
   });
   </script>
   <!-- END DO NOT EDIT -->

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Add/Edit Speaker</title>
+  <title>Speaker Registration</title>
   <link rel="stylesheet" href="https://unpkg.com/@primer/css@21.3.1/dist/primer.css">
   <!-- ⚠️ DO NOT EDIT: Styles managed by adcgen -->
   <style>
@@ -39,38 +39,22 @@
 
   <div class="form-container">
     <div class="form-header">
-      <h1 class="h2">Add/Edit Speaker</h1>
+      <h1 class="h2">Speaker Registration</h1>
     </div>
 
     <!-- You may add text, headings, and links around sections. Do NOT edit form fields — use "adcgen edit" instead. -->
     <form id="main-form">
 
       <!-- ✅ SAFE TO EDIT: Section headings, text, and links -->
-      <h3 class="h3 mb-3 pb-2 border-bottom">Speaker Information</h3>
+      <h3 class="h3 mb-3 pb-2 border-bottom">Speaker Details</h3>
       <!-- END SAFE TO EDIT -->
       <!-- ⚠️ DO NOT EDIT: Form fields managed by adcgen. Use "adcgen edit" to change. -->
       <div class="form-group mb-3">
         <div class="form-group-header">
-          <label class="FormControl-label" for="first_name">First Name <span class="color-fg-danger">*</span></label>
+          <label class="FormControl-label" for="full_name">Full Name <span class="color-fg-danger">*</span></label>
         </div>
         <div class="form-group-body">
-          <input class="form-control input-block" type="text" id="first_name" name="first_name" placeholder="Enter first name" required>
-        </div>
-      </div>
-      <div class="form-group mb-3">
-        <div class="form-group-header">
-          <label class="FormControl-label" for="last_name">Last Name <span class="color-fg-danger">*</span></label>
-        </div>
-        <div class="form-group-body">
-          <input class="form-control input-block" type="text" id="last_name" name="last_name" placeholder="Enter last name" required>
-        </div>
-      </div>
-      <div class="form-group mb-3">
-        <div class="form-group-header">
-          <label class="FormControl-label" for="title">Title <span class="color-fg-danger">*</span></label>
-        </div>
-        <div class="form-group-body">
-          <input class="form-control input-block" type="text" id="title" name="title" placeholder="Enter title" required>
+          <input class="form-control input-block" type="text" id="full_name" name="full_name" placeholder="Enter your full name" required>
         </div>
       </div>
       <div class="form-group mb-3">
@@ -78,43 +62,108 @@
           <label class="FormControl-label" for="email">Email <span class="color-fg-danger">*</span></label>
         </div>
         <div class="form-group-body">
-          <input class="form-control input-block" type="text" id="email" name="email" placeholder="Enter email" required>
+          <input class="form-control input-block" type="text" id="email" name="email" placeholder="speaker@example.com" required>
         </div>
       </div>
       <div class="form-group mb-3">
         <div class="form-group-header">
-          <label class="FormControl-label" for="personal_website">Personal Website</label>
+          <label class="FormControl-label" for="bio">Bio</label>
         </div>
         <div class="form-group-body">
-          <input class="form-control input-block" type="text" id="personal_website" name="personal_website" placeholder="Enter personal website URL">
+          <textarea class="form-control input-block" id="bio" name="bio" placeholder="Tell us about yourself" rows="4"></textarea>
         </div>
       </div>
       <div class="form-group mb-3">
         <div class="form-group-header">
-          <label class="FormControl-label" for="x_profile">X Profile</label>
+          <label class="FormControl-label" for="topic">Topic</label>
         </div>
         <div class="form-group-body">
-          <input class="form-control input-block" type="text" id="x_profile" name="x_profile" placeholder="Enter X profile URL">
+          <input class="form-control input-block" type="text" id="topic" name="topic" placeholder="Your talk topic">
         </div>
       </div>
       <div class="form-group mb-3">
         <div class="form-group-header">
-          <label class="FormControl-label" for="linkedin_profile">LinkedIn Profile</label>
+          <label class="FormControl-label" for="experience_level">Experience Level <span class="color-fg-danger">*</span></label>
         </div>
         <div class="form-group-body">
-          <input class="form-control input-block" type="text" id="linkedin_profile" name="linkedin_profile" placeholder="Enter LinkedIn profile URL">
+          <select class="form-select input-block" id="experience_level" name="experience_level" required>
+            <option value="">Select...</option>
+            <option value="Beginner">Beginner</option>
+            <option value="Intermediate">Intermediate</option>
+            <option value="Advanced">Advanced</option>
+            <option value="Expert">Expert</option>
+          </select>
         </div>
       </div>
+      <div class="form-checkbox mb-3">
+        <label><input type="checkbox" id="needs_travel" name="needs_travel"> Needs Travel Assistance</label>
+      </div>
+      <fieldset class="mb-3">
+        <legend class="FormControl-label">Preferred Session Time</legend>
+        <div class="form-checkbox">
+          <label><input type="radio" name="preferred_session" value="Morning" checked> Morning</label>
+        </div>
+        <div class="form-checkbox">
+          <label><input type="radio" name="preferred_session" value="Afternoon"> Afternoon</label>
+        </div>
+        <div class="form-checkbox">
+          <label><input type="radio" name="preferred_session" value="Evening"> Evening</label>
+        </div>
+      </fieldset>
       <div class="form-group mb-3">
         <div class="form-group-header">
-          <label class="FormControl-label" for="bio">Bio <span class="color-fg-danger">*</span></label>
+          <label class="FormControl-label" for="password">Password <span class="color-fg-danger">*</span></label>
         </div>
-        <div class="form-group-body">
-          <textarea class="form-control input-block" id="bio" name="bio" placeholder="Enter biography" rows="4" required></textarea>
+        <div class="form-group-body position-relative">
+          <input class="form-control input-block" type="password" id="password" name="password" placeholder="Create a password" required>
+          <button type="button" class="btn-octicon position-absolute" style="right:8px;top:50%;transform:translateY(-50%)" onclick="const i=document.getElementById('password');const t=i.type==='password'?'text':'password';i.type=t;this.innerHTML=t==='password'?'👁':'👁‍🗨'" aria-label="Toggle password visibility">👁</button>
         </div>
       </div>
+      <!-- END DO NOT EDIT -->
+
+      <!-- ✅ SAFE TO EDIT: Section headings, text, and links -->
+      <h3 class="h3 mb-3 pb-2 border-bottom">Previous Talks</h3>
+      <!-- END SAFE TO EDIT -->
+      <!-- ⚠️ DO NOT EDIT: Form fields managed by adcgen. Use "adcgen edit" to change. -->
+      <div class="mb-3">
+        <label class="FormControl-label">Previous Talks</label>
+        <div class="overflow-auto">
+          <table class="table-bordered width-full" id="table_previous_talks" data-field-name="previous_talks" data-columns="[{&quot;header&quot;:&quot;Talk Title&quot;,&quot;name&quot;:&quot;talk_title&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:true},{&quot;header&quot;:&quot;Conference&quot;,&quot;name&quot;:&quot;conference_name&quot;,&quot;type&quot;:&quot;text&quot;},{&quot;header&quot;:&quot;Year&quot;,&quot;name&quot;:&quot;year&quot;,&quot;type&quot;:&quot;dropdown&quot;,&quot;options&quot;:[&quot;2023&quot;,&quot;2024&quot;,&quot;2025&quot;,&quot;2026&quot;]},{&quot;header&quot;:&quot;Rating&quot;,&quot;name&quot;:&quot;rating&quot;,&quot;type&quot;:&quot;calculated&quot;,&quot;formula&quot;:&quot;=talk_title.length &gt; 0 ? '⭐'.repeat(Math.min(5, Math.ceil(year/500))) : ''&quot;}]" data-row-count="1">
+            <thead class="color-bg-subtle">
+              <tr>
+              <th class="p-2">Talk Title</th>
+              <th class="p-2">Conference</th>
+              <th class="p-2">Year</th>
+              <th class="p-2">Rating</th>
+              <th class="p-2" style="width:40px"></th>
+              </tr>
+            </thead>
+            <tbody>
+            <tr data-row="0">
+              <td class="p-2"><input class="form-control" type="text" name="previous_talks_talk_title_0" placeholder="Talk Title" required></td>
+              <td class="p-2"><input class="form-control" type="text" name="previous_talks_conference_name_0" placeholder="Conference"></td>
+              <td class="p-2"><select class="form-select" name="previous_talks_year_0"><option value="">Select...</option><option value="2023">2023</option><option value="2024">2024</option><option value="2025">2025</option><option value="2026">2026</option></select></td>
+              <td class="p-2"><input class="form-control" type="text" name="previous_talks_rating_0" readonly tabindex="-1" style="background:var(--bgColor-muted,#161b22);color:var(--fgColor-muted,#848d97)"></td>
+              <td class="p-2 text-center"><button type="button" class="btn-octicon color-fg-danger" onclick="deleteTableRow('table_previous_talks',this)" title="Delete row">✕</button></td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="mt-2">
+          <button type="button" class="btn btn-sm" onclick="addTableRow('table_previous_talks')">+ Add Row</button>
+        </div>
+      </div>
+      <!-- END DO NOT EDIT -->
+
+      <!-- ✅ SAFE TO EDIT: Section headings, text, and links -->
+      <h3 class="h3 mb-3 pb-2 border-bottom">Actions</h3>
+      <!-- END SAFE TO EDIT -->
+      <!-- ⚠️ DO NOT EDIT: Form fields managed by adcgen. Use "adcgen edit" to change. -->
       <div class="form-actions mb-3">
-        <button type="button" class="btn btn-primary" id="submit_button">Submit</button>
+        <button type="button" class="btn" id="validate_email_btn">Validate Email</button>
+      </div>
+      <div class="mb-3">
+        <a class="Link" href="/attendee/">Register as Attendee →</a>
       </div>
       <!-- END DO NOT EDIT -->
 
@@ -487,9 +536,9 @@
     });
 
     // Custom event handlers
-  // Submit: Submit the form
-  document.getElementById('submit_button')?.addEventListener('click', function(e) {
-    document.getElementById('main-form').requestSubmit();
+  // Validate Email: Check email format
+  document.getElementById('validate_email_btn')?.addEventListener('click', function(e) {
+    const email = document.getElementById('email').value; const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; if (re.test(email)) { alert('✅ Valid email: ' + email); } else { alert('❌ Invalid email format'); }
   });
   </script>
   <!-- END DO NOT EDIT -->

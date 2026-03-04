@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>User Information Form Records</title>
+  <title>Attendee Registration Records</title>
   <link rel="stylesheet" href="https://unpkg.com/@primer/css@21.3.1/dist/primer.css">
   <style>
     body { background-color: var(--bgColor-default, #0d1117); color: var(--fgColor-default, #e6edf3); }
@@ -33,7 +33,7 @@
 <body>
   <div class="form-container">
     <div class="form-header">
-      <h1 class="h2">User Information Form Records</h1>
+      <h1 class="h2">Attendee Registration Records</h1>
     </div>
 
     <div id="loading" class="empty-state">Loading records…</div>
@@ -42,7 +42,14 @@
       <table class="list-table">
         <thead>
           <tr>
-
+            <th class="p-2">First Name</th>
+            <th class="p-2">Last Name</th>
+            <th class="p-2">Email</th>
+            <th class="p-2">Company</th>
+            <th class="p-2">Role</th>
+            <th class="p-2">Dietary Restrictions</th>
+            <th class="p-2">Session Preference</th>
+            <th class="p-2">Notes</th>
             <th class="p-2" style="width:70px">Action</th>
           </tr>
         </thead>
@@ -53,14 +60,14 @@
     <div id="empty-msg" class="empty-state" style="display:none">No records found.</div>
 
     <div style="margin-top:1.5rem; display:flex; gap:0.75rem;">
-      <a href="/contacts/" class="btn btn-primary btn-sm">+ New Record</a>
+      <a href="/attendee/" class="btn btn-primary btn-sm">+ New Record</a>
       <a href="/" class="btn btn-sm">← Back to forms</a>
     </div>
   </div>
 
   <script>
-    const FORM_NAME = 'contacts';
-    const COLUMNS = [];
+    const FORM_NAME = 'attendee';
+    const COLUMNS = ["first_name","last_name","email","company","role","dietary_restrictions","session_preference","notes"];
     const API_BASE = (location.port === '3001' || location.port === '80' || location.port === '443' || location.port === '')
       ? '' : 'http://localhost:3001';
 

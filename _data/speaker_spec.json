@@ -1,139 +1,134 @@
 {
-  "title": "Add/Edit Speaker",
+  "title": "Speaker Registration",
   "formName": "speaker",
   "sections": [
     {
-      "heading": "Speaker Information",
+      "heading": "Speaker Details",
       "fields": [
         {
           "type": "text",
-          "label": "First Name",
-          "name": "first_name",
-          "placeholder": "Enter first name",
-          "required": true,
-          "options": [],
-          "href": "",
-          "columns": [],
-          "initialRows": 0,
-          "events": []
-        },
-        {
-          "type": "text",
-          "label": "Last Name",
-          "name": "last_name",
-          "placeholder": "Enter last name",
-          "required": true,
-          "options": [],
-          "href": "",
-          "columns": [],
-          "initialRows": 0,
-          "events": []
-        },
-        {
-          "type": "text",
-          "label": "Title",
-          "name": "title",
-          "placeholder": "Enter title",
-          "required": true,
-          "options": [],
-          "href": "",
-          "columns": [],
-          "initialRows": 0,
-          "events": []
+          "label": "Full Name",
+          "name": "full_name",
+          "placeholder": "Enter your full name",
+          "required": true
         },
         {
           "type": "text",
           "label": "Email",
           "name": "email",
-          "placeholder": "Enter email",
-          "required": true,
-          "options": [],
-          "href": "",
-          "columns": [],
-          "initialRows": 0,
-          "validation": {
-            "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
-            "message": "Please enter a valid email address."
-          },
-          "events": []
-        },
-        {
-          "type": "text",
-          "label": "Personal Website",
-          "name": "personal_website",
-          "placeholder": "Enter personal website URL",
-          "required": false,
-          "options": [],
-          "href": "",
-          "columns": [],
-          "initialRows": 0,
-          "validation": {
-            "pattern": "^(https?:\\/\\/)?([\\w\\-]+\\.)+[\\w\\-]+(\\/[\\w\\-\\._~:\\/?#[\\]@!$&'()*+,;=]*)?$",
-            "message": "Please enter a valid URL."
-          },
-          "events": []
-        },
-        {
-          "type": "text",
-          "label": "X Profile",
-          "name": "x_profile",
-          "placeholder": "Enter X profile URL",
-          "required": false,
-          "options": [],
-          "href": "",
-          "columns": [],
-          "initialRows": 0,
-          "validation": {
-            "pattern": "^(https?:\\/\\/)?([\\w\\-]+\\.)+[\\w\\-]+(\\/[\\w\\-\\._~:\\/?#[\\]@!$&'()*+,;=]*)?$",
-            "message": "Please enter a valid URL."
-          },
-          "events": []
-        },
-        {
-          "type": "text",
-          "label": "LinkedIn Profile",
-          "name": "linkedin_profile",
-          "placeholder": "Enter LinkedIn profile URL",
-          "required": false,
-          "options": [],
-          "href": "",
-          "columns": [],
-          "initialRows": 0,
-          "validation": {
-            "pattern": "^(https?:\\/\\/)?([\\w\\-]+\\.)+[\\w\\-]+(\\/[\\w\\-\\._~:\\/?#[\\]@!$&'()*+,;=]*)?$",
-            "message": "Please enter a valid URL."
-          },
-          "events": []
+          "placeholder": "speaker@example.com",
+          "required": true
         },
         {
           "type": "textarea",
           "label": "Bio",
           "name": "bio",
-          "placeholder": "Enter biography",
-          "required": true,
-          "options": [],
-          "href": "",
-          "columns": [],
-          "initialRows": 0,
-          "events": []
+          "placeholder": "Tell us about yourself",
+          "rows": 4
         },
         {
+          "type": "text",
+          "label": "Topic",
+          "name": "topic",
+          "placeholder": "Your talk topic"
+        },
+        {
+          "type": "dropdown",
+          "label": "Experience Level",
+          "name": "experience_level",
+          "options": [
+            "Beginner",
+            "Intermediate",
+            "Advanced",
+            "Expert"
+          ],
+          "required": true
+        },
+        {
+          "type": "checkbox",
+          "label": "Needs Travel Assistance",
+          "name": "needs_travel"
+        },
+        {
+          "type": "radio",
+          "label": "Preferred Session Time",
+          "name": "preferred_session",
+          "options": [
+            "Morning",
+            "Afternoon",
+            "Evening"
+          ]
+        },
+        {
+          "type": "password",
+          "label": "Password",
+          "name": "password",
+          "placeholder": "Create a password",
+          "required": true
+        }
+      ]
+    },
+    {
+      "heading": "Previous Talks",
+      "fields": [
+        {
+          "type": "table",
+          "label": "Previous Talks",
+          "name": "previous_talks",
+          "columns": [
+            {
+              "header": "Talk Title",
+              "name": "talk_title",
+              "type": "text",
+              "required": true
+            },
+            {
+              "header": "Conference",
+              "name": "conference_name",
+              "type": "text"
+            },
+            {
+              "header": "Year",
+              "name": "year",
+              "type": "dropdown",
+              "options": [
+                "2023",
+                "2024",
+                "2025",
+                "2026"
+              ]
+            },
+            {
+              "header": "Rating",
+              "name": "rating",
+              "type": "calculated",
+              "formula": "=talk_title.length > 0 ? '⭐'.repeat(Math.min(5, Math.ceil(year/500))) : ''"
+            }
+          ],
+          "initialRows": 1
+        }
+      ]
+    },
+    {
+      "heading": "Actions",
+      "fields": [
+        {
           "type": "button",
-          "label": "Submit",
-          "name": "submit_button",
-          "placeholder": "",
-          "required": false,
-          "options": [],
-          "href": "",
-          "columns": [],
-          "initialRows": 0,
+          "label": "Validate Email",
+          "name": "validate_email_btn",
           "events": [
             {
               "event": "click",
-              "description": "Submit the form",
-              "handler": "document.getElementById('main-form').requestSubmit();"
+              "description": "Check email format",
+              "handler": "const email = document.getElementById('email').value; const re = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/; if (re.test(email)) { alert('✅ Valid email: ' + email); } else { alert('❌ Invalid email format'); }"
             }
           ]
+        },
+        {
+          "type": "link",
+          "label": "Register as Attendee →",
+          "name": "attendee_link",
+          "href": "/attendee/"
         }
       ]
     }

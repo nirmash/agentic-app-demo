@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>User Information Form</title>
+  <title>Attendee Registration</title>
   <link rel="stylesheet" href="https://unpkg.com/@primer/css@21.3.1/dist/primer.css">
   <!-- ⚠️ DO NOT EDIT: Styles managed by adcgen -->
   <style>
@@ -39,46 +39,147 @@
 
   <div class="form-container">
     <div class="form-header">
-      <h1 class="h2">User Information Form</h1>
+      <h1 class="h2">Attendee Registration</h1>
     </div>
 
     <!-- You may add text, headings, and links around sections. Do NOT edit form fields — use "adcgen edit" instead. -->
     <form id="main-form">
 
       <!-- ✅ SAFE TO EDIT: Section headings, text, and links -->
-      <h3 class="h3 mb-3 pb-2 border-bottom">Enter User Details</h3>
+      <h3 class="h3 mb-3 pb-2 border-bottom">Personal Information</h3>
+      <!-- END SAFE TO EDIT -->
+      <!-- ⚠️ DO NOT EDIT: Form fields managed by adcgen. Use "adcgen edit" to change. -->
+      <div class="form-group mb-3">
+        <div class="form-group-header">
+          <label class="FormControl-label" for="first_name">First Name <span class="color-fg-danger">*</span></label>
+        </div>
+        <div class="form-group-body">
+          <input class="form-control input-block" type="text" id="first_name" name="first_name" placeholder="Enter your first name" required>
+        </div>
+      </div>
+      <div class="form-group mb-3">
+        <div class="form-group-header">
+          <label class="FormControl-label" for="last_name">Last Name <span class="color-fg-danger">*</span></label>
+        </div>
+        <div class="form-group-body">
+          <input class="form-control input-block" type="text" id="last_name" name="last_name" placeholder="Enter your last name" required>
+        </div>
+      </div>
+      <div class="form-group mb-3">
+        <div class="form-group-header">
+          <label class="FormControl-label" for="email">Email <span class="color-fg-danger">*</span></label>
+        </div>
+        <div class="form-group-body">
+          <input class="form-control input-block" type="text" id="email" name="email" placeholder="attendee@example.com" required>
+        </div>
+      </div>
+      <div class="form-group mb-3">
+        <div class="form-group-header">
+          <label class="FormControl-label" for="company">Company</label>
+        </div>
+        <div class="form-group-body">
+          <input class="form-control input-block" type="text" id="company" name="company" placeholder="Your company or organization">
+        </div>
+      </div>
+      <div class="form-group mb-3">
+        <div class="form-group-header">
+          <label class="FormControl-label" for="role">Role</label>
+        </div>
+        <div class="form-group-body">
+          <select class="form-select input-block" id="role" name="role">
+            <option value="">Select...</option>
+            <option value="Developer">Developer</option>
+            <option value="Designer">Designer</option>
+            <option value="Manager">Manager</option>
+            <option value="Executive">Executive</option>
+            <option value="Student">Student</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+      <fieldset class="mb-3">
+        <legend class="FormControl-label">Dietary Restrictions</legend>
+        <div class="form-checkbox">
+          <label><input type="checkbox" name="dietary_restrictions" value="Vegetarian"> Vegetarian</label>
+        </div>
+        <div class="form-checkbox">
+          <label><input type="checkbox" name="dietary_restrictions" value="Vegan"> Vegan</label>
+        </div>
+        <div class="form-checkbox">
+          <label><input type="checkbox" name="dietary_restrictions" value="Gluten-Free"> Gluten-Free</label>
+        </div>
+        <div class="form-checkbox">
+          <label><input type="checkbox" name="dietary_restrictions" value="Nut Allergy"> Nut Allergy</label>
+        </div>
+        <div class="form-checkbox">
+          <label><input type="checkbox" name="dietary_restrictions" value="Halal"> Halal</label>
+        </div>
+        <div class="form-checkbox">
+          <label><input type="checkbox" name="dietary_restrictions" value="Kosher"> Kosher</label>
+        </div>
+      </fieldset>
+      <fieldset class="mb-3">
+        <legend class="FormControl-label">Session Preference</legend>
+        <div class="form-checkbox">
+          <label><input type="radio" name="session_preference" value="Workshop" checked> Workshop</label>
+        </div>
+        <div class="form-checkbox">
+          <label><input type="radio" name="session_preference" value="Talk"> Talk</label>
+        </div>
+        <div class="form-checkbox">
+          <label><input type="radio" name="session_preference" value="Panel"> Panel</label>
+        </div>
+      </fieldset>
+      <div class="form-group mb-3">
+        <div class="form-group-header">
+          <label class="FormControl-label" for="notes">Notes</label>
+        </div>
+        <div class="form-group-body">
+          <textarea class="form-control input-block" id="notes" name="notes" placeholder="Any special requirements or notes" rows="3"></textarea>
+        </div>
+      </div>
+      <!-- END DO NOT EDIT -->
+
+      <!-- ✅ SAFE TO EDIT: Section headings, text, and links -->
+      <h3 class="h3 mb-3 pb-2 border-bottom">Sessions to Attend</h3>
       <!-- END SAFE TO EDIT -->
       <!-- ⚠️ DO NOT EDIT: Form fields managed by adcgen. Use "adcgen edit" to change. -->
       <div class="mb-3">
-        <label class="FormControl-label">User Details Table</label>
+        <label class="FormControl-label">Sessions to Attend</label>
         <div class="overflow-auto">
-          <table class="table-bordered width-full" id="table_user_details_table" data-field-name="user_details_table" data-columns="[{&quot;header&quot;:&quot;First Name&quot;,&quot;type&quot;:&quot;text&quot;,&quot;name&quot;:&quot;first_name&quot;,&quot;required&quot;:true},{&quot;header&quot;:&quot;Last Name&quot;,&quot;type&quot;:&quot;text&quot;,&quot;name&quot;:&quot;last_name&quot;,&quot;required&quot;:true},{&quot;header&quot;:&quot;Email&quot;,&quot;type&quot;:&quot;text&quot;,&quot;name&quot;:&quot;email&quot;,&quot;required&quot;:true},{&quot;header&quot;:&quot;Generated ID&quot;,&quot;type&quot;:&quot;calculated&quot;,&quot;name&quot;:&quot;generated_id&quot;,&quot;formula&quot;:&quot;{first_name}_{last_name}_{email.split('@')[0]}&quot;}]" data-row-count="1">
+          <table class="table-bordered width-full" id="table_sessions_to_attend" data-field-name="sessions_to_attend" data-columns="[{&quot;header&quot;:&quot;Session Name&quot;,&quot;name&quot;:&quot;session_name&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:true},{&quot;header&quot;:&quot;Time Slot&quot;,&quot;name&quot;:&quot;time_slot&quot;,&quot;type&quot;:&quot;dropdown&quot;,&quot;options&quot;:[&quot;9AM&quot;,&quot;10AM&quot;,&quot;11AM&quot;,&quot;1PM&quot;,&quot;2PM&quot;,&quot;3PM&quot;]},{&quot;header&quot;:&quot;Priority&quot;,&quot;name&quot;:&quot;priority&quot;,&quot;type&quot;:&quot;dropdown&quot;,&quot;options&quot;:[&quot;Must-attend&quot;,&quot;Want-to&quot;,&quot;Optional&quot;]},{&quot;header&quot;:&quot;Full Name&quot;,&quot;name&quot;:&quot;full_name&quot;,&quot;type&quot;:&quot;calculated&quot;,&quot;formula&quot;:&quot;{first_name} {last_name}&quot;}]" data-row-count="1">
             <thead class="color-bg-subtle">
               <tr>
-              <th class="p-2">First Name</th>
-              <th class="p-2">Last Name</th>
-              <th class="p-2">Email</th>
-              <th class="p-2">Generated ID</th>
+              <th class="p-2">Session Name</th>
+              <th class="p-2">Time Slot</th>
+              <th class="p-2">Priority</th>
+              <th class="p-2">Full Name</th>
               <th class="p-2" style="width:40px"></th>
               </tr>
             </thead>
             <tbody>
             <tr data-row="0">
-              <td class="p-2"><input class="form-control" type="text" name="user_details_table_first_name_0" placeholder="First Name" required></td>
-              <td class="p-2"><input class="form-control" type="text" name="user_details_table_last_name_0" placeholder="Last Name" required></td>
-              <td class="p-2"><input class="form-control" type="text" name="user_details_table_email_0" placeholder="Email" required></td>
-              <td class="p-2"><input class="form-control" type="text" name="user_details_table_generated_id_0" readonly tabindex="-1" style="background:var(--bgColor-muted,#161b22);color:var(--fgColor-muted,#848d97)"></td>
-              <td class="p-2 text-center"><button type="button" class="btn-octicon color-fg-danger" onclick="deleteTableRow('table_user_details_table',this)" title="Delete row">✕</button></td>
+              <td class="p-2"><input class="form-control" type="text" name="sessions_to_attend_session_name_0" placeholder="Session Name" required></td>
+              <td class="p-2"><select class="form-select" name="sessions_to_attend_time_slot_0"><option value="">Select...</option><option value="9AM">9AM</option><option value="10AM">10AM</option><option value="11AM">11AM</option><option value="1PM">1PM</option><option value="2PM">2PM</option><option value="3PM">3PM</option></select></td>
+              <td class="p-2"><select class="form-select" name="sessions_to_attend_priority_0"><option value="">Select...</option><option value="Must-attend">Must-attend</option><option value="Want-to">Want-to</option><option value="Optional">Optional</option></select></td>
+              <td class="p-2"><input class="form-control" type="text" name="sessions_to_attend_full_name_0" readonly tabindex="-1" style="background:var(--bgColor-muted,#161b22);color:var(--fgColor-muted,#848d97)"></td>
+              <td class="p-2 text-center"><button type="button" class="btn-octicon color-fg-danger" onclick="deleteTableRow('table_sessions_to_attend',this)" title="Delete row">✕</button></td>
             </tr>
             </tbody>
           </table>
         </div>
         <div class="mt-2">
-          <button type="button" class="btn btn-sm" onclick="addTableRow('table_user_details_table')">+ Add Row</button>
+          <button type="button" class="btn btn-sm" onclick="addTableRow('table_sessions_to_attend')">+ Add Row</button>
         </div>
       </div>
-      <div class="form-actions mb-3">
-        <button type="button" class="btn btn-primary" id="submit_button">Submit</button>
+      <!-- END DO NOT EDIT -->
+
+      <!-- ✅ SAFE TO EDIT: Section headings, text, and links -->
+      <h3 class="h3 mb-3 pb-2 border-bottom">Navigation</h3>
+      <!-- END SAFE TO EDIT -->
+      <!-- ⚠️ DO NOT EDIT: Form fields managed by adcgen. Use "adcgen edit" to change. -->
+      <div class="mb-3">
+        <a class="Link" href="/speaker/">Apply as Speaker →</a>
       </div>
       <!-- END DO NOT EDIT -->
 
@@ -98,7 +199,7 @@
 
   <!-- ⚠️ DO NOT EDIT: Form submission and data loading scripts managed by adcgen -->
   <script>
-    const FORM_NAME = 'contacts';
+    const FORM_NAME = 'attendee';
     let SESSION_ID = crypto.randomUUID ? crypto.randomUUID().split('-')[0] : Math.random().toString(36).slice(2, 10);
 
     // Auto-detect API base: same origin in production, localhost:3001 in Eleventy dev
@@ -451,10 +552,7 @@
     });
 
     // Custom event handlers
-  // Submit: Submit the form
-  document.getElementById('submit_button')?.addEventListener('click', function(e) {
-    document.getElementById('main-form').requestSubmit();
-  });
+
   </script>
   <!-- END DO NOT EDIT -->
 </body>

@@ -1,0 +1,140 @@
+{
+  "title": "Attendee Registration",
+  "formName": "attendee",
+  "sections": [
+    {
+      "heading": "Personal Information",
+      "fields": [
+        {
+          "type": "text",
+          "label": "First Name",
+          "name": "first_name",
+          "placeholder": "Enter your first name",
+          "required": true
+        },
+        {
+          "type": "text",
+          "label": "Last Name",
+          "name": "last_name",
+          "placeholder": "Enter your last name",
+          "required": true
+        },
+        {
+          "type": "text",
+          "label": "Email",
+          "name": "email",
+          "placeholder": "attendee@example.com",
+          "required": true
+        },
+        {
+          "type": "text",
+          "label": "Company",
+          "name": "company",
+          "placeholder": "Your company or organization"
+        },
+        {
+          "type": "dropdown",
+          "label": "Role",
+          "name": "role",
+          "options": [
+            "Developer",
+            "Designer",
+            "Manager",
+            "Executive",
+            "Student",
+            "Other"
+          ]
+        },
+        {
+          "type": "checkbox",
+          "label": "Dietary Restrictions",
+          "name": "dietary_restrictions",
+          "options": [
+            "Vegetarian",
+            "Vegan",
+            "Gluten-Free",
+            "Nut Allergy",
+            "Halal",
+            "Kosher"
+          ]
+        },
+        {
+          "type": "radio",
+          "label": "Session Preference",
+          "name": "session_preference",
+          "options": [
+            "Workshop",
+            "Talk",
+            "Panel"
+          ]
+        },
+        {
+          "type": "textarea",
+          "label": "Notes",
+          "name": "notes",
+          "placeholder": "Any special requirements or notes",
+          "rows": 3
+        }
+      ]
+    },
+    {
+      "heading": "Sessions to Attend",
+      "fields": [
+        {
+          "type": "table",
+          "label": "Sessions to Attend",
+          "name": "sessions_to_attend",
+          "columns": [
+            {
+              "header": "Session Name",
+              "name": "session_name",
+              "type": "text",
+              "required": true
+            },
+            {
+              "header": "Time Slot",
+              "name": "time_slot",
+              "type": "dropdown",
+              "options": [
+                "9AM",
+                "10AM",
+                "11AM",
+                "1PM",
+                "2PM",
+                "3PM"
+              ]
+            },
+            {
+              "header": "Priority",
+              "name": "priority",
+              "type": "dropdown",
+              "options": [
+                "Must-attend",
+                "Want-to",
+                "Optional"
+              ]
+            },
+            {
+              "header": "Full Name",
+              "name": "full_name",
+              "type": "calculated",
+              "formula": "{first_name} {last_name}"
+            }
+          ],
+          "initialRows": 1
+        }
+      ]
+    },
+    {
+      "heading": "Navigation",
+      "fields": [
+        {
+          "type": "link",
+          "label": "Apply as Speaker →",
+          "name": "speaker_link",
+          "href": "/speaker/"
+        }
+      ]
+    }
+  ]
+}

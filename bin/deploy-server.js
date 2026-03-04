@@ -40,6 +40,28 @@ app.post('/api/save', (req, res) => {
   res.json({ ok: true, file: fileName });
 });
 
+// API: list all records for a form (file-based)
+app.get('/api/records/:formName', (req, res) => {
+  const { formName } = req.params;
+  if (!fs.existsSync(DATA_DIR)) return res.json({ ok: true, records: [] });
+
+  const prefix = `${formName}_`;
+  const files = fs.readdirSync(DATA_DIR)
+    .filter(f => f.startsWith(prefix) && f.endsWith('.json') && !f.endsWith('_spec.json'))
+    .sort();
+
+  const records = files.map(f => {
+    try {
+      const data = JSON.parse(fs.readFileSync(path.join(DATA_DIR, f), 'utf-8'));
+      const sessionId = f.slice(prefix.length, -5);
+      const submittedAt = data._meta?.submittedAt || null;
+      return { sessionId, data, submittedAt };
+    } catch { return null; }
+  }).filter(Boolean);
+
+  res.json({ ok: true, records });
+});
+
 // API: load form data
 app.get('/api/load', (req, res) => {
   const { formName, id } = req.query;

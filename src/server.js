@@ -38,6 +38,28 @@ export function startDataServer(dataDir, port = 3001) {
     res.json({ ok: true, file: fileName });
   });
 
+  // List all records for a form (file-based)
+  app.get('/api/records/:formName', (req, res) => {
+    const { formName } = req.params;
+    if (!fs.existsSync(dataDir)) return res.json({ ok: true, records: [] });
+
+    const prefix = `${formName}_`;
+    const files = fs.readdirSync(dataDir)
+      .filter(f => f.startsWith(prefix) && f.endsWith('.json') && !f.endsWith('_spec.json'))
+      .sort();
+
+    const records = files.map(f => {
+      try {
+        const data = JSON.parse(fs.readFileSync(path.join(dataDir, f), 'utf-8'));
+        const sessionId = f.slice(prefix.length, -5); // strip prefix and .json
+        const submittedAt = data._meta?.submittedAt || null;
+        return { sessionId, data, submittedAt };
+      } catch { return null; }
+    }).filter(Boolean);
+
+    res.json({ ok: true, records });
+  });
+
   app.get('/api/load', (req, res) => {
     const { formName, id } = req.query;
     if (!formName || !id) return res.status(400).json({ error: 'formName and id required' });

@@ -1,0 +1,55 @@
+{
+  "title": "User Information Form",
+  "formName": "contacts",
+  "sections": [
+    {
+      "heading": "Enter User Details",
+      "fields": [
+        {
+          "type": "table",
+          "label": "User Details Table",
+          "name": "user_details_table",
+          "columns": [
+            {
+              "header": "First Name",
+              "type": "text",
+              "name": "first_name",
+              "required": true
+            },
+            {
+              "header": "Last Name",
+              "type": "text",
+              "name": "last_name",
+              "required": true
+            },
+            {
+              "header": "Email",
+              "type": "text",
+              "name": "email",
+              "required": true
+            },
+            {
+              "header": "Generated ID",
+              "type": "calculated",
+              "name": "generated_id",
+              "formula": "{first_name}_{last_name}_{email.split('@')[0]}"
+            }
+          ],
+          "initialRows": 1
+        },
+        {
+          "type": "button",
+          "label": "Submit",
+          "name": "submit_button",
+          "events": [
+            {
+              "event": "click",
+              "description": "Submit the form",
+              "handler": "document.getElementById('main-form').requestSubmit();"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

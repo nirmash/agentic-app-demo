@@ -3,7 +3,7 @@ import { createRequire } from 'module';
 import { login, logout, getToken } from './auth.js';
 import { generateFormSpec, editFormSpec, editFormHtml } from './generator.js';
 import { renderAsciiPreview } from './ascii-preview.js';
-import { buildEleventySite, generateIndexPage } from './eleventy-builder.js';
+import { buildEleventySite, generateIndexPage, generateListViewHtml } from './eleventy-builder.js';
 import { startDataServer } from './server.js';
 import { createInterface } from 'readline';
 import { spawn } from 'child_process';
@@ -501,9 +501,17 @@ export function createCli() {
         } else {
           console.log(`  ⚠️  Not found: ${name}`);
         }
+        // Remove list view page
+        const listFile = path.join(siteDir, `${name}_list.html`);
+        if (fs.existsSync(listFile)) {
+          fs.unlinkSync(listFile);
+          console.log(`  🗑  Removed: ${name}_list`);
+        }
         // Also remove from _site (production output)
         const prodFile = path.join(PROJECT_ROOT, '_site', `${name}.html`);
         if (fs.existsSync(prodFile)) fs.unlinkSync(prodFile);
+        const prodListFile = path.join(PROJECT_ROOT, '_site', `${name}_list.html`);
+        if (fs.existsSync(prodListFile)) fs.unlinkSync(prodListFile);
         // Remove spec file (read it first for DB cleanup)
         const specFile = path.join(dataDir, `${name}_spec.json`);
         // Drop DB tables if DATABASE_URL is set (Embr context)
@@ -556,6 +564,58 @@ export function createCli() {
         }
       }
       console.log('\n  ✅ All generated files cleaned.\n');
+    });
+
+  program
+    .command('list_view')
+    .description('Generate a list view page showing all records for a form')
+    .argument('[name]', 'Form name (e.g. speaker)')
+    .action(async (name) => {
+      const fs = (await import('fs')).default;
+      const dataDir = path.join(PROJECT_ROOT, '_data');
+      const siteDir = path.join(PROJECT_ROOT, '_site_src');
+
+      if (!fs.existsSync(dataDir)) {
+        console.log('⚠️  No forms found. Run: adcgen generate\n');
+        return;
+      }
+
+      const specs = fs.readdirSync(dataDir).filter(f => f.endsWith('_spec.json'));
+      if (specs.length === 0) {
+        console.log('⚠️  No form specs found. Run: adcgen generate\n');
+        return;
+      }
+
+      // List available forms if no name given
+      if (!name) {
+        const formNames = specs.map(f => f.replace('_spec.json', ''));
+        console.log('\n📋 Available forms:\n');
+        formNames.forEach(f => console.log(`     • ${f}`));
+        console.log('\n  Usage: adcgen list_view <formName>\n');
+        return;
+      }
+
+      const specFile = path.join(dataDir, `${name}_spec.json`);
+      if (!fs.existsSync(specFile)) {
+        console.log(`⚠️  Spec not found for "${name}". Available forms:`);
+        specs.forEach(f => console.log(`     • ${f.replace('_spec.json', '')}`));
+        console.log('');
+        return;
+      }
+
+      const spec = JSON.parse(fs.readFileSync(specFile, 'utf-8'));
+      fs.mkdirSync(siteDir, { recursive: true });
+
+      const listHtml = generateListViewHtml(spec);
+      const listFileName = `${name}_list.html`;
+      fs.writeFileSync(path.join(siteDir, listFileName), listHtml);
+
+      // Regenerate index to show the list view link
+      generateIndexPage(siteDir);
+
+      console.log(`\n  ✓ List view: ${siteDir}/${listFileName}`);
+      console.log(`  ✓ Index page updated with Records link`);
+      console.log(`\n  Run "adcgen launch" to see it.\n`);
     });
 
   program

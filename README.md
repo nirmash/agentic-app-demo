@@ -262,6 +262,15 @@ The deploy script:
 - `deploy.sh` — Orchestrates the full deployment
 - `bin/deploy-server.js` — Production server (static files + API on a single port)
 
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Architecture](docs/ARCHITECTURE.md) | System overview, component diagram, data flow, deployment modes |
+| [API Reference](docs/API.md) | All Express endpoints with request/response examples |
+| [Form Spec](docs/FORM-SPEC.md) | JSON form spec format — field types, table columns, calculated fields, events |
+| [Contributing](docs/CONTRIBUTING.md) | Dev setup, testing, how to add a field type, PR process |
+
 ## Requirements
 
 - Node.js 18+

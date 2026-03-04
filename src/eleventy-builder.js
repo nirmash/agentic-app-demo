@@ -627,6 +627,135 @@ ${eventScript}
 </html>`;
 }
 
+export function generateListViewHtml(spec) {
+  const formName = spec.formName || 'form';
+  const titleLabel = (spec.title || formName).replace(/^Add\/Edit\s*/i, '');
+
+  // Collect scalar columns from spec (skip table-type fields)
+  const columns = [];
+  for (const section of spec.sections || []) {
+    for (const field of section.fields || []) {
+      if (['table', 'button', 'link'].includes(field.type)) continue;
+      columns.push({ name: field.name, label: field.label || field.name });
+    }
+  }
+
+  const thHtml = columns.map(c =>
+    `            <th class="p-2">${escapeHtml(c.label)}</th>`
+  ).join('\n');
+
+  const colsJson = JSON.stringify(columns.map(c => c.name));
+
+  return `<!DOCTYPE html>
+<html lang="en" data-color-mode="dark" data-dark-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${escapeHtml(titleLabel)} Records</title>
+  <link rel="stylesheet" href="https://unpkg.com/@primer/css@21.3.1/dist/primer.css">
+  <style>
+    body { background-color: var(--bgColor-default, #0d1117); color: var(--fgColor-default, #e6edf3); }
+    .form-container {
+      max-width: 960px;
+      margin: 2rem auto;
+      background: var(--bgColor-muted, #161b22);
+      border: 1px solid var(--borderColor-default, #30363d);
+      border-radius: 6px;
+      padding: 2rem;
+    }
+    .form-header {
+      text-align: center;
+      padding-bottom: 1rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--borderColor-default, #30363d);
+    }
+    .list-table { border-collapse: collapse; width: 100%; }
+    .list-table th, .list-table td { border: 1px solid var(--borderColor-default, #30363d); padding: 8px 12px; text-align: left; }
+    .list-table th { background: var(--bgColor-neutral-muted, #21262d); }
+    .list-table tr:hover { background: var(--bgColor-default, #0d1117); }
+    .list-table a { color: var(--fgColor-accent, #58a6ff); text-decoration: none; }
+    .list-table a:hover { text-decoration: underline; }
+    .empty-state { text-align: center; padding: 2rem; color: var(--fgColor-muted, #8b949e); }
+  </style>
+</head>
+<body>
+  <div class="form-container">
+    <div class="form-header">
+      <h1 class="h2">${escapeHtml(titleLabel)} Records</h1>
+    </div>
+
+    <div id="loading" class="empty-state">Loading records…</div>
+
+    <div class="overflow-auto" id="table-wrap" style="display:none">
+      <table class="list-table">
+        <thead>
+          <tr>
+${thHtml}
+            <th class="p-2" style="width:70px">Action</th>
+          </tr>
+        </thead>
+        <tbody id="records-body"></tbody>
+      </table>
+    </div>
+
+    <div id="empty-msg" class="empty-state" style="display:none">No records found.</div>
+
+    <div style="margin-top:1.5rem; display:flex; gap:0.75rem;">
+      <a href="/${formName}/" class="btn btn-primary btn-sm">+ New Record</a>
+      <a href="/" class="btn btn-sm">← Back to forms</a>
+    </div>
+  </div>
+
+  <script>
+    const FORM_NAME = '${formName}';
+    const COLUMNS = ${colsJson};
+    const API_BASE = (location.port === '3001' || location.port === '80' || location.port === '443' || location.port === '')
+      ? '' : 'http://localhost:3001';
+
+    async function loadRecords() {
+      try {
+        const res = await fetch(API_BASE + '/api/records/' + FORM_NAME);
+        const result = await res.json();
+        document.getElementById('loading').style.display = 'none';
+
+        if (!result.ok || !result.records || result.records.length === 0) {
+          document.getElementById('empty-msg').style.display = '';
+          return;
+        }
+
+        const tbody = document.getElementById('records-body');
+        document.getElementById('table-wrap').style.display = '';
+
+        for (const rec of result.records) {
+          const tr = document.createElement('tr');
+          for (const col of COLUMNS) {
+            const td = document.createElement('td');
+            let val = rec.data[col];
+            if (val === undefined || val === null) val = '';
+            if (typeof val === 'object') val = JSON.stringify(val);
+            td.textContent = String(val);
+            tr.appendChild(td);
+          }
+          // View link
+          const actionTd = document.createElement('td');
+          const link = document.createElement('a');
+          link.href = '/' + FORM_NAME + '/?id=' + rec.sessionId;
+          link.textContent = 'View';
+          actionTd.appendChild(link);
+          tr.appendChild(actionTd);
+          tbody.appendChild(tr);
+        }
+      } catch (err) {
+        document.getElementById('loading').textContent = 'Failed to load records.';
+      }
+    }
+
+    loadRecords();
+  </script>
+</body>
+</html>`;
+}
+
 export function buildEleventySite(spec, outputDir) {
   const siteDir = path.join(outputDir, '_site_src');
   const dataDir = path.join(outputDir, '_data');
@@ -639,6 +768,11 @@ export function buildEleventySite(spec, outputDir) {
   const formHtml = generateFormHtml(spec);
   const fileName = `${spec.formName || 'form'}.html`;
   fs.writeFileSync(path.join(siteDir, fileName), formHtml);
+
+  // Write the list view page
+  const listHtml = generateListViewHtml(spec);
+  const listFileName = `${spec.formName || 'form'}_list.html`;
+  fs.writeFileSync(path.join(siteDir, listFileName), listHtml);
 
   // Regenerate index page listing all forms
   generateIndexPage(siteDir);
@@ -670,22 +804,26 @@ export function buildEleventySite(spec, outputDir) {
 
 export function generateIndexPage(siteDir) {
   const forms = fs.readdirSync(siteDir)
-    .filter(f => f.endsWith('.html') && f !== 'index.html')
+    .filter(f => f.endsWith('.html') && f !== 'index.html' && !f.endsWith('_list.html'))
     .map(f => {
       const name = f.replace('.html', '');
       const label = name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-      return { file: name, label };
+      const hasListView = fs.existsSync(path.join(siteDir, `${name}_list.html`));
+      return { file: name, label, hasListView };
     });
 
-  const links = forms.map(f =>
-    `        <li class="Box-row">
-          <a href="/${f.file}/" class="Link d-flex flex-items-center">
+  const links = forms.map(f => {
+    const listLink = f.hasListView
+      ? `\n            <a href="/${f.file}_list/" class="Label Label--accent ml-2" style="text-decoration:none;">📊 Records</a>`
+      : '';
+    return `        <li class="Box-row">
+          <a href="/${f.file}/" class="Link d-flex flex-items-center" style="flex:1">
             <span class="mr-2">📋</span>
             <span class="flex-auto">${f.label}</span>
             <span class="Label Label--secondary">${f.file}.html</span>
-          </a>
-        </li>`
-  ).join('\n');
+          </a>${listLink}
+        </li>`;
+  }).join('\n');
 
   const html = `<!DOCTYPE html>
 <html lang="en" data-color-mode="dark" data-dark-theme="dark">
