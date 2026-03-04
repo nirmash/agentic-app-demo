@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "universes_allowed": ["the-usual-suspects"],
+  "max_per_universe": 8,
+  "overflow_strategy": "diegetic-expansion"
+}
