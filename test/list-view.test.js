@@ -127,9 +127,9 @@ describe('generateListViewHtml — column headers', () => {
     assert.ok(!html.includes('<th class="p-2">Back</th>'));
   });
 
-  it('should have an Action column header', () => {
+  it('should have an Edit column header', () => {
     assert.ok(html.includes('<th class="p-2"'));
-    assert.ok(html.includes('Action'));
+    assert.ok(html.includes('Edit'));
   });
 });
 
@@ -148,8 +148,8 @@ describe('generateListViewHtml — JavaScript', () => {
     assert.ok(html.includes("FORM_NAME = 'my_form'"));
   });
 
-  it('should include a View link in the record rendering logic', () => {
-    assert.ok(html.includes("'View'") || html.includes('"View"') || html.includes('.textContent = \'View\''));
+  it('should include an Edit link in the record rendering logic', () => {
+    assert.ok(html.includes("'✏️ Edit'") || html.includes('"✏️ Edit"') || html.includes('Edit'));
   });
 });
 
@@ -161,8 +161,8 @@ describe('generateListViewHtml — edge cases', () => {
     const html = generateListViewHtml(spec);
     assert.ok(html.startsWith('<!DOCTYPE html>'));
     assert.ok(html.includes('<table'));
-    // Should still have the Action column
-    assert.ok(html.includes('Action'));
+    // Should still have the Edit column
+    assert.ok(html.includes('Edit'));
   });
 
   it('should handle specs with only table-type fields (no scalar columns)', () => {
@@ -176,11 +176,11 @@ describe('generateListViewHtml — edge cases', () => {
     });
     const html = generateListViewHtml(spec);
     assert.ok(html.startsWith('<!DOCTYPE html>'));
-    // Action column should still be there
-    assert.ok(html.includes('Action'));
-    // No scalar <th> elements besides Action
+    // Edit column should still be there
+    assert.ok(html.includes('Edit'));
+    // No scalar <th> elements besides Edit
     const thMatches = html.match(/<th class="p-2"[^>]*>/g) || [];
-    assert.equal(thMatches.length, 1, 'Only Action column header expected');
+    assert.equal(thMatches.length, 1, 'Only Edit column header expected');
   });
 
   it('should strip "Add/Edit" prefix from title', () => {

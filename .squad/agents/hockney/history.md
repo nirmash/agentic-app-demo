@@ -7,7 +7,12 @@ User: Nir Mashkowski.
 **Testing setup:** Node.js native test runner. `npm test` runs `node --test test/*.test.js`. 71 existing tests in `all-controls.test.js` covering HTML structure, all field types, tables, calculated columns, ASCII preview, and index page generation.
 
 ## Learnings
-- **Test count:** 172 total (71 original + 69 prior + 32 new in list-view.test.js). All pass in ~260ms.
+- **Test count:** 204 total (172 prior + 32 new in deployed-app.test.js). All pass in ~440ms.
+- **deployed-app.test.js pattern:** Integration tests that spawn `bin/deploy-server.js` on a random port (9000+rand), poll until ready, run HTTP assertions, then kill the process. Uses `DATABASE_URL=''` to skip Postgres paths. Cleanup of test-created data files via `after()` hook.
+- **List view API URL pattern:** List view HTML builds the fetch URL dynamically (`'/api/records/' + FORM_NAME`), not as a literal string. Tests must check for the path fragment and the FORM_NAME variable separately.
+- **deploy-server.js port flag:** Accepts `--port N` via `process.argv` parsing (no env var). The default is 80.
+- **Static file routing:** Eleventy outputs directories (e.g., `_site/speaker/index.html`) served as `/speaker/`. List views are at `/speaker_list/`. A 404 is returned for non-existent paths.
+- **Pre-existing flaky failure:** `server.test.js` intermittently fails with `Error: Unable to deserialize cloned data` when run alongside other test files — a known Node.js test runner parallel bug. Passes when run individually. Not caused by deployed-app.test.js.
 - **List view column filtering:** `generateListViewHtml` skips `table`, `button`, and `link` field types — only scalar fields become column headers. Edge case: a spec with *only* table-type fields produces zero scalar columns but still renders a valid page with just the Action column.
 - **Title sanitization:** `generateListViewHtml` strips "Add/Edit " prefix from titles for the list view heading. Worth testing when forms have edit-style titles.
 - **_spec.json exclusion:** The `/api/records/:formName` endpoint filters out `_spec.json` files by checking `!f.endsWith('_spec.json')`. Important to test because spec files share the same prefix pattern.
@@ -30,4 +35,11 @@ User: Nir Mashkowski.
 - **3 data tables** — Previous Talks (speaker), Sessions to Attend (attendee), plus buttons/links for navigation
 - **Calculated columns** — both template `{field}` and expression `=...` modes represented
 - Ready for E2E test coverage across forms, navigation, and data operations
+
+## Regression Test: Form Navigation (2026-03-04)
+- **test/form-navigation.test.js** — 34 tests covering form navigation, auto-load, and list view edit links
+- **HTML generation tests (20):** Verify `generateFormHtml` outputs Prev/Next buttons, record-nav bar, record counter, New Record button, `/api/records/` fetch, FORM_NAME variable, `?id=` URL param reading, `/api/load` fetch, auto-load logic (`fetchRecordsList`), `populateForm` function. Verify `generateListViewHtml` outputs Edit links with `?id=` param, `/api/records/` fetch, `createElement('a')`, sessionId in hrefs, Edit column header.
+- **E2E tests (14):** Deploy server on random port, test speaker form nav markup, `/api/records/speaker` returns records array, `/api/load?formName=speaker&id=abc12345` loads specific record, speaker_list page has Edit links with `?id=` pattern.
+- **Pattern: function name flexibility** — auto-load function may be named `fetchRecordsList`, `loadRecords`, `loadRecordsFromDb`, or `loadRecordsFromApi`. Tests check all variants.
+- **Pattern: Fenster renamed** "Action" column → "Edit", "View" link text → "✏️ Edit". Assertions accept both old and new naming.
 

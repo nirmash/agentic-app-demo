@@ -38,20 +38,20 @@ describe('Record navigation bar', () => {
 // ─── DB Record Loading Logic ──────────────────────────────────
 
 describe('DB record loading script', () => {
-  it('should include loadRecordsFromDb function', () => {
-    assert.ok(LOGIN_HTML.includes('loadRecordsFromDb'), 'Should have DB record loading function');
+  it('should include fetchRecordsList function', () => {
+    assert.ok(LOGIN_HTML.includes('fetchRecordsList'), 'Should have record loading function');
   });
 
-  it('should call /api/db/records endpoint', () => {
-    assert.ok(LOGIN_HTML.includes('/api/db/records/'), 'Should reference the records API endpoint');
+  it('should call /api/records endpoint', () => {
+    assert.ok(LOGIN_HTML.includes('/api/records/'), 'Should reference the records API endpoint');
   });
 
   it('should include navigateRecord function for prev/next', () => {
     assert.ok(LOGIN_HTML.includes('navigateRecord'), 'Should have record navigation function');
   });
 
-  it('should include displayRecord function to populate form', () => {
-    assert.ok(LOGIN_HTML.includes('displayRecord'), 'Should have displayRecord function');
+  it('should include loadRecordById function to populate form', () => {
+    assert.ok(LOGIN_HTML.includes('loadRecordById'), 'Should have loadRecordById function');
   });
 });
 
@@ -73,7 +73,7 @@ describe('Individual record form navigation', () => {
 describe('Table-type form record handling', () => {
   it('should include table-type specific record handling', () => {
     // Forms with table fields should also load child table data
-    assert.ok(ALL_CONTROLS_HTML.includes('loadRecordsFromDb'), 'Table form should have DB loading');
+    assert.ok(ALL_CONTROLS_HTML.includes('fetchRecordsList'), 'Table form should have record loading');
   });
 });
 

@@ -364,8 +364,8 @@
         .catch(() => {});
     }
 
-    // ─── DB Record Navigation ─────────────────────────────────
-    let dbRecords = [];
+    // ─── Record Navigation ─────────────────────────────────
+    let recordsList = [];
     let currentRecordIdx = -1;
     const recordNav = document.getElementById('record-nav');
     const recordPrev = document.getElementById('record-prev');
@@ -373,30 +373,26 @@
     const recordCounter = document.getElementById('record-counter');
     const recordNew = document.getElementById('record-new');
 
-    async function loadRecordsFromDb() {
+    async function loadRecordById(id) {
       try {
-        const res = await fetch(API_BASE + '/api/db/records/' + FORM_NAME);
+        const res = await fetch(API_BASE + '/api/load?formName=' + FORM_NAME + '&id=' + id);
         if (!res.ok) return;
-        const data = await res.json();
-        if (!data.ok || !data.records || data.records.length === 0) return;
-        dbRecords = data.records;
-        recordNav.style.display = '';
-        // If we loaded a specific record by ?id=, find its index
-        if (loadId) {
-          const idx = dbRecords.findIndex(r => r.session_id === loadId);
-          if (idx >= 0) currentRecordIdx = idx;
-        }
-        // Auto-display the first record if none is selected
-        if (currentRecordIdx < 0 && dbRecords.length > 0) {
-          currentRecordIdx = 0;
-          await displayRecord(dbRecords[0].session_id);
-        }
-        updateRecordNav();
+        const result = await res.json();
+        if (!result.data) return;
+        SESSION_ID = id;
+        document.getElementById('main-form').reset();
+        document.querySelectorAll('table[data-field-name] tbody').forEach(function(tb) { tb.innerHTML = ''; });
+        populateForm(result.data);
+        document.querySelectorAll('table[data-field-name]').forEach(function(table) {
+          var cols = JSON.parse(table.dataset.columns);
+          if (!cols.some(function(c) { return c.type === 'calculated'; })) return;
+          table.querySelectorAll('tbody tr').forEach(function(tr) { recalcRow(table, tr); });
+        });
       } catch {}
     }
 
     function updateRecordNav() {
-      const total = dbRecords.length;
+      const total = recordsList.length;
       const cur = currentRecordIdx >= 0 ? currentRecordIdx + 1 : '—';
       recordCounter.textContent = cur + ' / ' + total;
       recordPrev.disabled = currentRecordIdx <= 0;
@@ -405,31 +401,31 @@
 
     async function navigateRecord(direction) {
       const newIdx = currentRecordIdx + direction;
-      if (newIdx < 0 || newIdx >= dbRecords.length) return;
+      if (newIdx < 0 || newIdx >= recordsList.length) return;
       currentRecordIdx = newIdx;
-      await displayRecord(dbRecords[newIdx].session_id);
+      await loadRecordById(recordsList[newIdx].sessionId);
       updateRecordNav();
     }
 
-    async function displayRecord(sessionId) {
+    async function fetchRecordsList() {
       try {
-        const res = await fetch(API_BASE + '/api/db/record/' + FORM_NAME + '/' + sessionId);
+        const res = await fetch(API_BASE + '/api/records/' + FORM_NAME);
         if (!res.ok) return;
         const data = await res.json();
-        if (!data.ok || !data.record) return;
-
-        SESSION_ID = sessionId;
-        // Reset form and clear table rows
-        document.getElementById('main-form').reset();
-        document.querySelectorAll('table[data-field-name] tbody').forEach(function(tb) { tb.innerHTML = ''; });
-
-        populateForm(data.record);
-        // Recalculate computed columns
-        document.querySelectorAll('table[data-field-name]').forEach(function(table) {
-          var cols = JSON.parse(table.dataset.columns);
-          if (!cols.some(function(c) { return c.type === 'calculated'; })) return;
-          table.querySelectorAll('tbody tr').forEach(function(tr) { recalcRow(table, tr); });
-        });
+        if (!data.ok || !data.records || data.records.length === 0) return;
+        recordsList = data.records;
+        recordNav.style.display = '';
+        // If a specific record was requested via ?id=, find its index
+        if (loadId) {
+          const idx = recordsList.findIndex(r => r.sessionId === loadId);
+          if (idx >= 0) currentRecordIdx = idx;
+        }
+        // Auto-load first record if none is selected
+        if (currentRecordIdx < 0 && recordsList.length > 0) {
+          currentRecordIdx = 0;
+          await loadRecordById(recordsList[0].sessionId);
+        }
+        updateRecordNav();
       } catch {}
     }
 
@@ -444,8 +440,8 @@
       updateRecordNav();
     });
 
-    // Load records from DB on page load (only if not loading a specific file-based record)
-    if (!loadId) loadRecordsFromDb();
+    // Load records list and auto-display first record on page load
+    fetchRecordsList();
 
     // Collect all form data including tables
     function collectFormData() {
@@ -511,12 +507,11 @@
           const toast = document.getElementById('toast');
           toast.style.display = 'block';
           setTimeout(() => toast.style.display = 'none', 3000);
-          // Refresh records — the saved record will be at index 0 (most recent)
+          // Refresh records list after save
           const savedId = SESSION_ID;
           currentRecordIdx = -1;
-          await loadRecordsFromDb();
-          // Find the just-saved record
-          const idx = dbRecords.findIndex(r => r.session_id === savedId);
+          await fetchRecordsList();
+          const idx = recordsList.findIndex(r => r.sessionId === savedId);
           if (idx >= 0) currentRecordIdx = idx;
           updateRecordNav();
         } else {

@@ -50,7 +50,7 @@
             <th class="p-2">Dietary Restrictions</th>
             <th class="p-2">Session Preference</th>
             <th class="p-2">Notes</th>
-            <th class="p-2" style="width:70px">Action</th>
+            <th class="p-2" style="width:70px">Edit</th>
           </tr>
         </thead>
         <tbody id="records-body"></tbody>
@@ -99,7 +99,7 @@
           const actionTd = document.createElement('td');
           const link = document.createElement('a');
           link.href = '/' + FORM_NAME + '/?id=' + rec.sessionId;
-          link.textContent = 'View';
+          link.textContent = '✏️ Edit';
           actionTd.appendChild(link);
           tr.appendChild(actionTd);
           tbody.appendChild(tr);
