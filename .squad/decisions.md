@@ -2,6 +2,41 @@
 
 ## Active Decisions
 
+### Conference Test Application
+
+**Author:** Fenster (Core Dev)  
+**Status:** Implemented
+
+Created a "conference management" test application with 3 forms and 9 pre-loaded records to serve as a comprehensive test fixture for the deployed app.
+
+#### Forms Created
+
+| Form | Field Types Covered | Table | Button | Link |
+|------|-------------------|-------|--------|------|
+| `speaker` | text, textarea, password, dropdown, checkbox (single), radio | Previous Talks (text, text, dropdown, calculated-expression) | Validate Email | → attendee |
+| `attendee` | text, textarea, dropdown, checkbox (multi-option), radio | Sessions to Attend (text, dropdown, dropdown, calculated-template) | — | → speaker |
+| `session` | text, textarea, dropdown, radio | — | Check Availability | → speaker |
+
+#### Pre-loaded Data (9 records)
+
+- **Speaker**: 3 records (abc12345, def67890, ghi11111) — varied experience levels, talk counts
+- **Attendee**: 3 records (jkl22222, mno33333, pqr44444) — different roles, dietary options, session counts
+- **Session**: 3 records (stu55555, vwx66666, yza77777) — keynote, workshop, talk types
+
+#### Rationale
+
+- Covers all supported field types including both calculated column modes (template `{field}` and expression `=...`).
+- Replaced the simpler existing `speaker_spec.json` with the comprehensive test version.
+- Data records use deterministic session IDs (not UUIDs) so tests can reference them by ID.
+- Cross-form links (speaker ↔ attendee ↔ session) enable navigation testing.
+
+#### Impact
+
+- All 172 tests pass (~260ms).
+- Hockney can now write E2E tests against these forms and data.
+
+---
+
 ### Documentation Structure
 
 **Author:** McManus (DevRel)  

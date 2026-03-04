@@ -38,3 +38,10 @@ User: Nir Mashkowski.
 - **`list_view` CLI command** in `src/cli.js` — generates read-only record list pages on demand
 - **Index page "Records" badges** — new `📊 Records` badges with links to list view pages for each form (in `generateIndexPage`)
 
+## Test Application (Fenster, 2026-03-04T16:52Z)
+- **Conference management demo** — 3 complete forms demonstrating all field types
+- **9 sample records** — pre-loaded data across speaker, attendee, and session entities
+- **Cross-form navigation** — links and buttons connecting speaker ↔ attendee ↔ session
+- **Table columns & calculated fields** — real-world examples of tables with both template and expression calculations
+- All 172 tests passing; ready for documentation and user training materials
+

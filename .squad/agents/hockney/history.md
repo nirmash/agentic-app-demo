@@ -7,7 +7,12 @@ User: Nir Mashkowski.
 **Testing setup:** Node.js native test runner. `npm test` runs `node --test test/*.test.js`. 71 existing tests in `all-controls.test.js` covering HTML structure, all field types, tables, calculated columns, ASCII preview, and index page generation.
 
 ## Learnings
-- **Test count:** 140 total (71 original + 69 new across 5 files). All pass in ~243ms.
+- **Test count:** 172 total (71 original + 69 prior + 32 new in list-view.test.js). All pass in ~260ms.
+- **List view column filtering:** `generateListViewHtml` skips `table`, `button`, and `link` field types — only scalar fields become column headers. Edge case: a spec with *only* table-type fields produces zero scalar columns but still renders a valid page with just the Action column.
+- **Title sanitization:** `generateListViewHtml` strips "Add/Edit " prefix from titles for the list view heading. Worth testing when forms have edit-style titles.
+- **_spec.json exclusion:** The `/api/records/:formName` endpoint filters out `_spec.json` files by checking `!f.endsWith('_spec.json')`. Important to test because spec files share the same prefix pattern.
+- **Index page _list.html handling:** `generateIndexPage` now filters out `_list.html` files from the form count and conditionally adds a "📊 Records" badge when a corresponding `_list.html` exists.
+- **Node.js test runner parallel bug:** Running all test files together occasionally triggers `Error: Unable to deserialize cloned data` in `server.test.js` — a known Node.js test runner serialization issue. Each file passes individually.
 - **auth.js caching:** `CONFIG_DIR`/`CONFIG_FILE` are module-level constants evaluated once at load time from `process.env.HOME`. To test auth functions in isolation, set `HOME` to a temp dir *before* importing the module. Cache-busting with query strings (`?t=...`) works for re-evaluating a single module but not its transitive dependencies.
 - **generator.js auth coupling:** `generator.js` imports `auth.js` at the top level. To test "not authenticated" paths, override `HOME` before the first import of `generator.js` so `getToken()` finds no config file. Then also delete `GITHUB_TOKEN` env var.
 - **server.js port 0:** `startDataServer(dir, 0)` binds to a random available port — use `server.address().port` to discover it. Essential for parallel-safe tests.
@@ -18,4 +23,11 @@ User: Nir Mashkowski.
 
 ## New Functions Added (Fenster, 2026-03-04T01:23Z)
 - **`generateListViewHtml(spec, records)`** in `src/eleventy-builder.js` — builds read-only HTML table of record data, filtering columns to scalar fields only, includes "View" links to individual records. Ready for test coverage.
+
+## Test Application (Fenster, 2026-03-04T16:52Z)
+- **Conference management app** — 3 forms (speaker, attendee, session) with all field types covered
+- **9 pre-loaded records** — deterministic IDs (abc12345, def67890, etc.) for consistent test assertions
+- **3 data tables** — Previous Talks (speaker), Sessions to Attend (attendee), plus buttons/links for navigation
+- **Calculated columns** — both template `{field}` and expression `=...` modes represented
+- Ready for E2E test coverage across forms, navigation, and data operations
 
