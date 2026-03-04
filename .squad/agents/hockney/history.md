@@ -15,3 +15,7 @@ User: Nir Mashkowski.
 - **eleventy-builder.js escapeHtml:** The `escapeHtml` function handles `&`, `<`, `>`, `"` — verified by dedicated escaping tests.
 - **Test patterns:** Use `fs.mkdtempSync` + `after` cleanup. Group with `describe`. ES module imports. `node:test` + `node:assert/strict`.
 - **Key test files:** `test/server.test.js` (API), `test/auth.test.js` (config I/O), `test/generator.test.js` (exports + auth guard), `test/db-sync.test.js` (path + early return), `test/eleventy-builder.test.js` (field types + escaping + index).
+
+## New Functions Added (Fenster, 2026-03-04T01:23Z)
+- **`generateListViewHtml(spec, records)`** in `src/eleventy-builder.js` — builds read-only HTML table of record data, filtering columns to scalar fields only, includes "View" links to individual records. Ready for test coverage.
+

@@ -32,3 +32,9 @@ User: Nir Mashkowski.
 - No TypeScript, no external test framework — Node.js native test runner
 - snake_case for all field names and file names
 - Primer CSS dark mode for all generated HTML
+
+## New Endpoints & Features (Fenster, 2026-03-04T01:23Z)
+- **`GET /api/records/:formName`** — added to both `src/server.js` (dev) and `bin/deploy-server.js` (prod) to retrieve saved record JSON files for a given form. Enables record browsing without database requirement.
+- **`list_view` CLI command** in `src/cli.js` — generates read-only record list pages on demand
+- **Index page "Records" badges** — new `📊 Records` badges with links to list view pages for each form (in `generateIndexPage`)
+
