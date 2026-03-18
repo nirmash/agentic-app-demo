@@ -21,10 +21,12 @@
           "rows": 4
         },
         {
-          "type": "text",
-          "label": "Speaker Name",
-          "name": "speaker_name",
-          "placeholder": "Primary speaker",
+          "type": "lookup",
+          "label": "Speaker",
+          "name": "speaker",
+          "source": "speaker",
+          "displayField": "name",
+          "valueField": "sessionId",
           "required": true
         },
         {

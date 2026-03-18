@@ -231,7 +231,7 @@ describe('generateFormHtml — individual field types', () => {
       }],
     });
     const html = generateFormHtml(spec);
-    assert.ok(html.includes('href="/dashboard/"'));
+    assert.ok(html.includes('href="/dashboard/?new=true"'));
     assert.ok(html.includes('Dashboard'));
     assert.ok(html.includes('class="Link"'));
   });

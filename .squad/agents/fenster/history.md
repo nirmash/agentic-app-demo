@@ -52,3 +52,9 @@ User: Nir Mashkowski.
 - Pattern: when adding toolbar actions, place them in the `#record-nav` bar with `btn btn-sm` classes. Extract shared logic into named functions rather than duplicating inline handlers.
 - All tests pass (231/232 with 1 pre-existing server.test.js issue). Existing forms require rebuild to display new button.
 - Logged in orchestration-log/2026-03-18T00:07-fenster.md and log/2026-03-18T00:07-save-button.md
+
+### Form Template Regeneration (2026-03-18)
+- When new features are added to `generateFormHtml()` in `eleventy-builder.js`, existing HTML templates in `_site_src/` are stale until explicitly regenerated.
+- The `adcgen rebuild` command (`node bin/adcgen.js rebuild`) reads all `_data/*_spec.json` files and calls `buildEleventySite(spec, projectRoot)` for each, regenerating both form and list view HTML.
+- After rebuild, must run `npm run build` (Eleventy) to propagate changes from `_site_src/` → `_site/`.
+- Pattern: any change to the HTML generator should be followed by `adcgen rebuild && npm run build` to keep deployed forms in sync.

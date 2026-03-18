@@ -140,7 +140,7 @@ describe('Radio fields', () => {
 
 describe('Link fields', () => {
   it('should render anchor tag', () => {
-    assert.ok(HTML.includes('href="/login/"'));
+    assert.ok(HTML.includes('href="/login/?new=true"'));
     assert.ok(HTML.includes('Go to Login Page'));
     assert.ok(HTML.includes('class="Link"'));
   });

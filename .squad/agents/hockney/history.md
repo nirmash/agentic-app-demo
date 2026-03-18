@@ -42,4 +42,11 @@ User: Nir Mashkowski.
 - **E2E tests (14):** Deploy server on random port, test speaker form nav markup, `/api/records/speaker` returns records array, `/api/load?formName=speaker&id=abc12345` loads specific record, speaker_list page has Edit links with `?id=` pattern.
 - **Pattern: function name flexibility** — auto-load function may be named `fetchRecordsList`, `loadRecords`, `loadRecordsFromDb`, or `loadRecordsFromApi`. Tests check all variants.
 - **Pattern: Fenster renamed** "Action" column → "Edit", "View" link text → "✏️ Edit". Assertions accept both old and new naming.
+- **Test count:** 264 total (238 prior + 26 new in new-features.test.js). All pass in ~430ms.
+- **new-features.test.js:** 26 tests across 5 describe blocks covering 4 new features: lookup dropdown (single & multi-select), links open new record (?new=true), back home button, and breadcrumbs.
+- **Lookup field implementation:** Uses `data-lookup-source`, `data-lookup-display`, `data-lookup-value` data attributes on the `<select>` element. JS populates options dynamically via `fetch('/api/records/' + source)`. No literal source URL in the HTML — must test via data attributes.
+- **Link ?new=true:** Fenster's change appends `?new=true` to all link hrefs. This broke 2 existing tests in `eleventy-builder.test.js` and `all-controls.test.js` that checked for bare hrefs — fixed both to include `?new=true`.
+- **Breadcrumbs:** Rendered as `<nav aria-label="Breadcrumb">` with an `<ol class="breadcrumb">`. Home links to `/`, current page shows escaped spec.title with `aria-current="page"`.
+- **Home button:** Rendered as `<a href="/" class="btn btn-sm">🏠 Home</a>` in the record navigation area.
+- **?new=true param handling:** Form JS reads `urlParams.get('new')` and sets `isNewRecord` flag to skip auto-loading existing records.
 

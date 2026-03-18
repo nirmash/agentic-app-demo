@@ -44,7 +44,7 @@
           <tr>
             <th class="p-2">Title</th>
             <th class="p-2">Description</th>
-            <th class="p-2">Speaker Name</th>
+            <th class="p-2">Speaker</th>
             <th class="p-2">Room</th>
             <th class="p-2">Capacity</th>
             <th class="p-2">Date</th>
@@ -68,7 +68,7 @@
 
   <script>
     const FORM_NAME = 'session';
-    const COLUMNS = ["title","description","speaker_name","room","capacity","date","start_time","duration_minutes","session_type"];
+    const COLUMNS = ["title","description","speaker","room","capacity","date","start_time","duration_minutes","session_type"];
     const API_BASE = (location.port === '3001' || location.port === '80' || location.port === '443' || location.port === '')
       ? '' : 'http://localhost:3001';
 

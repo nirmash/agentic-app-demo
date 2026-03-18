@@ -38,6 +38,14 @@
   <div class="toast-success" id="toast">✓ Data saved successfully!</div>
 
   <div class="form-container">
+    <!-- Breadcrumb navigation -->
+    <nav aria-label="Breadcrumb" class="mb-3">
+      <ol class="breadcrumb" style="list-style:none; display:flex; gap:0.25rem; padding:0; margin:0; font-size:14px;">
+        <li class="breadcrumb-item"><a href="/" class="Link">Home</a></li>
+        <li class="breadcrumb-item breadcrumb-item-selected" aria-current="page">Session Management</li>
+      </ol>
+    </nav>
+
     <div class="form-header">
       <h1 class="h2">Session Management</h1>
     </div>
@@ -67,10 +75,12 @@
       </div>
       <div class="form-group mb-3">
         <div class="form-group-header">
-          <label class="FormControl-label" for="speaker_name">Speaker Name <span class="color-fg-danger">*</span></label>
+          <label class="FormControl-label" for="speaker">Speaker <span class="color-fg-danger">*</span></label>
         </div>
         <div class="form-group-body">
-          <input class="form-control input-block" type="text" id="speaker_name" name="speaker_name" placeholder="Primary speaker" required>
+          <select class="form-select input-block" id="speaker" name="speaker" required data-lookup-source="speaker" data-lookup-display="name" data-lookup-value="sessionId">
+            <option value="">Loading…</option>
+          </select>
         </div>
       </div>
       <div class="form-group mb-3">
@@ -155,7 +165,7 @@
         <button type="button" class="btn" id="check_availability_btn">Check Availability</button>
       </div>
       <div class="mb-3">
-        <a class="Link" href="/speaker/">View Speakers →</a>
+        <a class="Link" href="/speaker/?new=true">View Speakers →</a>
       </div>
       <!-- END DO NOT EDIT -->
 
@@ -164,6 +174,7 @@
     <!-- Record navigation bar -->
     <div id="record-nav" style="display:none; margin-top:1rem; padding:0.75rem; background:var(--bgColor-muted,#161b22); border:1px solid var(--borderColor-default,#30363d); border-radius:6px;">
       <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+        <a href="/" class="btn btn-sm" title="Back to Home">🏠 Home</a>
         <button type="button" id="record-prev" class="btn btn-sm" disabled>← Prev</button>
         <span id="record-counter" style="font-size:13px; color:var(--fgColor-muted,#8b949e); min-width:80px; text-align:center;">— / —</span>
         <button type="button" id="record-next" class="btn btn-sm" disabled>Next →</button>
@@ -186,7 +197,30 @@
     // Check URL for ?id= param to load existing data
     const urlParams = new URLSearchParams(window.location.search);
     const loadId = urlParams.get('id');
+    const isNewRecord = urlParams.get('new') === 'true';
     if (loadId) SESSION_ID = loadId;
+
+    // Populate lookup dropdowns from source form records
+    document.querySelectorAll('select[data-lookup-source]').forEach(async function(sel) {
+      const source = sel.dataset.lookupSource;
+      const displayField = sel.dataset.lookupDisplay || 'name';
+      const valueField = sel.dataset.lookupValue || 'sessionId';
+      try {
+        const res = await fetch(API_BASE + '/api/records/' + source);
+        const result = await res.json();
+        sel.innerHTML = '<option value="">Select…</option>';
+        if (result.ok && result.records) {
+          result.records.forEach(function(rec) {
+            const opt = document.createElement('option');
+            opt.value = valueField === 'sessionId' ? rec.sessionId : (rec.data[valueField] || rec.sessionId);
+            opt.textContent = rec.data[displayField] || rec.sessionId;
+            sel.appendChild(opt);
+          });
+        }
+      } catch(e) {
+        sel.innerHTML = '<option value="">Failed to load</option>';
+      }
+    });
 
     // Table row management
     function addTableRow(tableId) {
@@ -300,16 +334,12 @@
           const tableEl = document.querySelector('table[data-field-name="' + key + '"]');
           if (tableEl) {
             const tbody = tableEl.querySelector('tbody');
-            // Clear existing rows and reset counter
             while (tbody.rows.length > 0) tbody.deleteRow(0);
             tableEl.dataset.rowCount = 0;
-            // Filter out null entries from sparse arrays
             const dataRows = value.filter(function(r) { return r != null; });
-            // Add the right number of rows
             for (let i = 0; i < Math.max(dataRows.length, 1); i++) {
               addTableRow(tableEl.id);
             }
-            // Populate cells positionally
             const rows = tbody.rows;
             dataRows.forEach(function(row, idx) {
               if (row && typeof row === 'object' && idx < rows.length) {
@@ -323,6 +353,14 @@
                 }
               }
             });
+            continue;
+          }
+          // Multi-select lookup: set selected options
+          const selEl = form.querySelector('select[name="' + key + '"][multiple]');
+          if (selEl) {
+            const vals = value.map(String);
+            Array.from(selEl.options).forEach(opt => { opt.selected = vals.includes(opt.value); });
+            continue;
           }
           continue;
         }
@@ -414,7 +452,10 @@
         const res = await fetch(API_BASE + '/api/records/' + FORM_NAME);
         if (!res.ok) return;
         const data = await res.json();
-        if (!data.ok || !data.records || data.records.length === 0) return;
+        if (!data.ok || !data.records || data.records.length === 0) {
+          if (isNewRecord) recordNav.style.display = '';
+          return;
+        }
         recordsList = data.records;
         recordNav.style.display = '';
         // If a specific record was requested via ?id=, find its index
@@ -422,8 +463,8 @@
           const idx = recordsList.findIndex(r => r.sessionId === loadId);
           if (idx >= 0) currentRecordIdx = idx;
         }
-        // Auto-load first record if none is selected
-        if (currentRecordIdx < 0 && recordsList.length > 0) {
+        // Auto-load first record if none is selected (unless ?new=true)
+        if (currentRecordIdx < 0 && recordsList.length > 0 && !isNewRecord) {
           currentRecordIdx = 0;
           await loadRecordById(recordsList[0].sessionId);
         }
