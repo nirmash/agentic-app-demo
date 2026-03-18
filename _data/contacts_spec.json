@@ -32,7 +32,7 @@
               "header": "Generated ID",
               "type": "calculated",
               "name": "generated_id",
-              "formula": "{first_name}_{last_name}_{email.split('@')[0]}"
+              "formula": "=first_name + '_' + last_name + '_' + email.split('@')[0]"
             }
           ],
           "initialRows": 1

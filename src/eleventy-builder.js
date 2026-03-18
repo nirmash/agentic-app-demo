@@ -599,16 +599,33 @@ ${sectionsHtml}
       const data = {};
       const formData = new FormData(form);
 
+      // Build list of known table field names from DOM (longest first for correct matching)
+      const tableFieldNames = [];
+      document.querySelectorAll('table[data-field-name]').forEach(function(t) {
+        tableFieldNames.push(t.dataset.fieldName);
+      });
+      tableFieldNames.sort(function(a, b) { return b.length - a.length; });
+
       for (const [key, value] of formData.entries()) {
-        // Handle table fields: fieldname_colname_rowindex
-        const tableMatch = key.match(/^(.+?)_(.+?)_(\\d+)$/);
-        if (tableMatch) {
-          const [, table, col, row] = tableMatch;
-          if (!data[table]) data[table] = [];
-          if (!data[table][parseInt(row)]) data[table][parseInt(row)] = {};
-          data[table][parseInt(row)][col] = value;
-          continue;
+        // Handle table fields: match against known table field names
+        let tableMatched = false;
+        for (const tName of tableFieldNames) {
+          const prefix = tName + '_';
+          if (key.startsWith(prefix)) {
+            const rest = key.substring(prefix.length);
+            const lastUs = rest.lastIndexOf('_');
+            if (lastUs >= 0 && /^\\d+$/.test(rest.substring(lastUs + 1))) {
+              const col = rest.substring(0, lastUs);
+              const row = parseInt(rest.substring(lastUs + 1));
+              if (!data[tName]) data[tName] = [];
+              if (!data[tName][row]) data[tName][row] = {};
+              data[tName][row][col] = value;
+              tableMatched = true;
+              break;
+            }
+          }
         }
+        if (tableMatched) continue;
 
         // Handle checkboxes with multiple values
         if (data[key] !== undefined) {

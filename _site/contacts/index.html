@@ -60,7 +60,7 @@
       <div class="mb-3">
         <label class="FormControl-label">User Details Table</label>
         <div class="overflow-auto">
-          <table class="table-bordered width-full" id="table_user_details_table" data-field-name="user_details_table" data-columns="[{&quot;header&quot;:&quot;First Name&quot;,&quot;type&quot;:&quot;text&quot;,&quot;name&quot;:&quot;first_name&quot;,&quot;required&quot;:true},{&quot;header&quot;:&quot;Last Name&quot;,&quot;type&quot;:&quot;text&quot;,&quot;name&quot;:&quot;last_name&quot;,&quot;required&quot;:true},{&quot;header&quot;:&quot;Email&quot;,&quot;type&quot;:&quot;text&quot;,&quot;name&quot;:&quot;email&quot;,&quot;required&quot;:true},{&quot;header&quot;:&quot;Generated ID&quot;,&quot;type&quot;:&quot;calculated&quot;,&quot;name&quot;:&quot;generated_id&quot;,&quot;formula&quot;:&quot;{first_name}_{last_name}_{email.split('@')[0]}&quot;}]" data-row-count="1">
+          <table class="table-bordered width-full" id="table_user_details_table" data-field-name="user_details_table" data-columns="[{&quot;header&quot;:&quot;First Name&quot;,&quot;type&quot;:&quot;text&quot;,&quot;name&quot;:&quot;first_name&quot;,&quot;required&quot;:true},{&quot;header&quot;:&quot;Last Name&quot;,&quot;type&quot;:&quot;text&quot;,&quot;name&quot;:&quot;last_name&quot;,&quot;required&quot;:true},{&quot;header&quot;:&quot;Email&quot;,&quot;type&quot;:&quot;text&quot;,&quot;name&quot;:&quot;email&quot;,&quot;required&quot;:true},{&quot;header&quot;:&quot;Generated ID&quot;,&quot;type&quot;:&quot;calculated&quot;,&quot;name&quot;:&quot;generated_id&quot;,&quot;formula&quot;:&quot;=first_name + '_' + last_name + '_' + email.split('@')[0]&quot;}]" data-row-count="1">
             <thead class="color-bg-subtle">
               <tr>
               <th class="p-2">First Name</th>
@@ -413,16 +413,33 @@
       const data = {};
       const formData = new FormData(form);
 
+      // Build list of known table field names from DOM (longest first for correct matching)
+      const tableFieldNames = [];
+      document.querySelectorAll('table[data-field-name]').forEach(function(t) {
+        tableFieldNames.push(t.dataset.fieldName);
+      });
+      tableFieldNames.sort(function(a, b) { return b.length - a.length; });
+
       for (const [key, value] of formData.entries()) {
-        // Handle table fields: fieldname_colname_rowindex
-        const tableMatch = key.match(/^(.+?)_(.+?)_(\d+)$/);
-        if (tableMatch) {
-          const [, table, col, row] = tableMatch;
-          if (!data[table]) data[table] = [];
-          if (!data[table][parseInt(row)]) data[table][parseInt(row)] = {};
-          data[table][parseInt(row)][col] = value;
-          continue;
+        // Handle table fields: match against known table field names
+        let tableMatched = false;
+        for (const tName of tableFieldNames) {
+          const prefix = tName + '_';
+          if (key.startsWith(prefix)) {
+            const rest = key.substring(prefix.length);
+            const lastUs = rest.lastIndexOf('_');
+            if (lastUs >= 0 && /^\d+$/.test(rest.substring(lastUs + 1))) {
+              const col = rest.substring(0, lastUs);
+              const row = parseInt(rest.substring(lastUs + 1));
+              if (!data[tName]) data[tName] = [];
+              if (!data[tName][row]) data[tName][row] = {};
+              data[tName][row][col] = value;
+              tableMatched = true;
+              break;
+            }
+          }
         }
+        if (tableMatched) continue;
 
         // Handle checkboxes with multiple values
         if (data[key] !== undefined) {

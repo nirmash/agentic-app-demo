@@ -68,3 +68,20 @@ User: Nir Mashkowski.
 - `populateForm()` updated to handle multi-select lookups (arrays of string values → set selected options).
 - All 264 tests pass. Existing link test assertions updated to expect `?new=true` suffix.
 - Paired with Hockney to write 26 new tests, fix 2 pre-existing test failures. Logged in orchestration-log/2026-03-18T00:41-fenster.md.
+
+### List View Breadcrumbs & All Controls Test Form (2026-03-18)
+- Added breadcrumb navigation to `generateListViewHtml()` in `eleventy-builder.js` — same Primer CSS pattern as form pages: `Home > {Form Title} Records`.
+- The breadcrumb sits in `<nav aria-label="Breadcrumb">` above the form-header div, matching the form page layout exactly.
+- Expanded `all_controls_test_spec.json` to cover every control type: text, textarea, password, dropdown, checkbox (single + multi-option), radio, lookup (single-select pointing to `speaker`), lookup (multi-select pointing to `session`), link (to speaker and attendee forms), button (with click handlers), and table with calculated columns (both template `{field}` and expression `=...` modes).
+- Created 3 sample data records (`ctrl00001`, `ctrl00002`, `ctrl00003`) with varied data across all field types. Each includes `_meta.formName` per the convention.
+- Updated `.gitignore` to un-ignore `all_controls_test_*.json` data files for deployment.
+- The `node src/cli.js rebuild` command sometimes doesn't pick up just-saved source changes — running `buildEleventySite()` directly via a node script is more reliable for immediate verification.
+- 251 tests pass; 2 pre-existing Node.js runner deserialization failures (server.test.js, list-view.test.js) are unrelated.
+
+### Contacts Form Bug Fixes (2026-07)
+- **collectFormData regex bug:** The non-greedy regex `^(.+?)_(.+?)_(\d+)$` used to parse table input names (`{tableName}_{colName}_{row}`) misidentified the table name when it contained underscores (e.g., `user_details_table` → captured as `user`). Data saved under wrong keys, so `populateForm` couldn't reload it. Contacts was 100% table fields, making the form appear to not save at all.
+- **Fix:** Replaced regex with DOM-aware approach — reads known table field names from `table[data-field-name]` attributes, matches input names against them (longest-first), then extracts column and row from the remaining suffix. This correctly handles any number of underscores in table or column names.
+- **Calculated field expression bug:** The contacts spec formula `{first_name}_{last_name}_{email.split('@')[0]}` mixed template syntax (`{field}`) with a JS expression inside braces. The template regex `\{(\w+)\}` only matches simple field names, so the expression part rendered as a literal string.
+- **Fix:** Changed formula to expression mode: `=first_name + '_' + last_name + '_' + email.split('@')[0]`. Expression mode uses `new Function()` to evaluate arbitrary JS with column values as parameters.
+- Convention: when a calculated column formula needs anything beyond simple `{field_name}` replacement, use expression mode (`=` prefix). Template mode only supports `\w+` field name references.
+- All 264 tests pass (1 pre-existing server.test.js uncaughtException in full suite run, passes individually).
