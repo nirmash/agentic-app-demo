@@ -260,6 +260,7 @@ ${sectionsHtml}
         <span id="record-counter" style="font-size:13px; color:var(--fgColor-muted,#8b949e); min-width:80px; text-align:center;">— / —</span>
         <button type="button" id="record-next" class="btn btn-sm" disabled>Next →</button>
         <span style="flex:auto;"></span>
+        <button type="button" id="record-save" class="btn btn-sm btn-success">💾 Save</button>
         <button type="button" id="record-new" class="btn btn-sm btn-primary">+ New Record</button>
       </div>
     </div>
@@ -464,6 +465,7 @@ ${sectionsHtml}
     const recordNext = document.getElementById('record-next');
     const recordCounter = document.getElementById('record-counter');
     const recordNew = document.getElementById('record-new');
+    const recordSave = document.getElementById('record-save');
 
     async function loadRecordById(id) {
       try {
@@ -579,9 +581,8 @@ ${sectionsHtml}
       return data;
     }
 
-    // Form submission → save JSON via local API
-    document.getElementById('main-form').addEventListener('submit', async function(e) {
-      e.preventDefault();
+    // Save current form data via local API
+    async function saveCurrentRecord() {
       const data = collectFormData();
       data._meta = {
         formName: FORM_NAME,
@@ -612,7 +613,16 @@ ${sectionsHtml}
       } catch (err) {
         alert('Could not connect to save server. Is the adcgen server running?');
       }
+    }
+
+    // Form submission → save
+    document.getElementById('main-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      await saveCurrentRecord();
     });
+
+    // Save button in record nav bar
+    recordSave.addEventListener('click', function() { saveCurrentRecord(); });
 
     // Custom event handlers
 ${eventScript}

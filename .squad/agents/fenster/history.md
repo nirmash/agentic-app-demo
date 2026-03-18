@@ -43,3 +43,10 @@ User: Nir Mashkowski.
 - List view "View" links renamed to "✏️ Edit" with column header changed from "Action" to "Edit".
 - `generateFormHtml()` returns a string — to regenerate files, must write output to `_site_src/` manually (or use `buildEleventySite()`).
 - Tests updated in `test/db-records.test.js`, `test/list-view.test.js`, and `test/form-navigation.test.js` to match new function names and column headers.
+
+### Save Button on Forms (2025)
+- Added a "💾 Save" button to the record navigation bar in `generateFormHtml()`, placed next to the existing "+ New Record" button.
+- Extracted the form save logic into a reusable `saveCurrentRecord()` async function — called by both the form submit handler and the save button click handler.
+- The save uses the current `SESSION_ID` so it updates the existing record (not creates a new one).
+- Save button uses `btn-success` class (green) to visually distinguish from the primary "+ New Record" button.
+- Pattern: when adding toolbar actions, place them in the `#record-nav` bar with `btn btn-sm` classes. Extract shared logic into named functions rather than duplicating inline handlers.
