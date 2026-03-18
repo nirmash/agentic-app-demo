@@ -50,3 +50,10 @@ User: Nir Mashkowski.
 - **Home button:** Rendered as `<a href="/" class="btn btn-sm">🏠 Home</a>` in the record navigation area.
 - **?new=true param handling:** Form JS reads `urlParams.get('new')` and sets `isNewRecord` flag to skip auto-loading existing records.
 
+### Form Features Test Coverage (2026-03-18)
+- **26 new tests** written for the 4 new form features (lookup, links, home button, breadcrumbs)
+- **2 pre-existing test failures fixed** unrelated to new features
+- **264 total tests passing** (~430ms)
+- **Test coverage includes:** Lookup field rendering and dynamic population, link href `?new=true` appending, home button presence in nav, breadcrumb HTML structure and link targets, multi-select lookup handling
+- **Pattern: Test data-attributes not literal URLs** — lookup fields use `data-lookup-source` attributes checked by client-side JS, not hardcoded URLs in HTML
+- Paired with Fenster on feature batch. Logged in orchestration-log/2026-03-18T00:41-hockney.md.

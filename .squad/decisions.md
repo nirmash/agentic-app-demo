@@ -157,3 +157,70 @@ Added a "💾 Save" button to all generated forms, placed in the record navigati
 **Rationale:** Users could submit forms (which saves + navigates) but had no explicit "save current record" action. The Save button makes the save action discoverable and intentional, especially when editing existing records loaded via navigation.
 
 **Impact:** All existing tests pass (231/232 — 1 pre-existing Node.js runner issue in server.test.js). Existing forms need a rebuild (`buildEleventySite()` or `adcgen rebuild`) to pick up the new button.
+
+---
+
+### Form System Features: Lookup, New-Record Links, Home Button, Breadcrumbs
+
+**Author:** Fenster (Core Dev)  
+**Status:** Implemented  
+**Date:** 2026-03-18
+
+Added four UI enhancements to the form system:
+
+**1. Lookup Dropdown (Foreign Key Field)**
+
+New field type `lookup` creates a `<select>` that dynamically loads records from another form's data via `/api/records/{source}`.
+
+Spec format:
+```json
+{
+  "type": "lookup",
+  "label": "Speaker",
+  "name": "speaker",
+  "source": "speaker",
+  "displayField": "name",
+  "valueField": "sessionId",
+  "multiple": false
+}
+```
+
+- `source`: form name to load records from
+- `displayField`: field from source record shown as option label
+- `valueField`: field from source record used as option value
+- `multiple`: if true, renders multi-select
+- Implementation: `generateFieldHtml()` renders `<select data-lookup-source>`, client-side JS populates via fetch
+
+**2. Links Open New Record**
+
+Link fields (`type: "link"`) append `?new=true` to href. Target form's JS detects this and skips auto-loading, presenting a blank form instead.
+
+**3. Home Button**
+
+`🏠 Home` link added to record navigation bar on every form, linking to `/`. Placed before Prev/Next buttons.
+
+**4. Breadcrumbs**
+
+Primer CSS breadcrumb navigation above form header: `Home > {Form Title}`. Both "Home" and form title link to `/` and form list view respectively.
+
+**Files Changed:**
+- `src/eleventy-builder.js` — all 4 features in `generateFormHtml()`, lookup in `generateFieldHtml()`
+- `_data/session_spec.json` — replaced `speaker_name` text field with `speaker` lookup field
+- All `_site_src/*.html` and `_site/*/index.html` — regenerated
+- Test assertions updated for `?new=true` in link fields
+
+**Impact:** 264 tests pass. All 5 forms rebuilt.
+
+---
+
+### Decision: Regenerate Forms After Generator Changes
+
+**Author:** Fenster (Core Dev)  
+**Date:** 2026-03-18  
+**Status:** Convention
+
+After any change to the HTML generation logic in `eleventy-builder.js`, run `adcgen rebuild && npm run build` to regenerate all form templates and rebuild the Eleventy site. This ensures deployed forms always reflect the latest generator output.
+
+Previously, the save button was added to `generateFormHtml()` but existing HTML files in `_site_src/` were not regenerated, causing deployed forms to miss the button. This convention prevents future drift between generator logic and generated output.
+
+**Impact:** All 5 forms now have current generator features; commit `ec290f0` on `main`.
