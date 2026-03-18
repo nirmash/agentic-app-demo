@@ -91,3 +91,25 @@ describe('db-sync — syncAllRecordsToDb() without DATABASE_URL', () => {
     assert.equal(result, undefined);
   });
 });
+
+describe('db-sync — startSyncWithRetry() without DATABASE_URL', () => {
+  let startSyncWithRetry;
+  let originalDbUrl;
+
+  before(async () => {
+    originalDbUrl = process.env.DATABASE_URL;
+    delete process.env.DATABASE_URL;
+    ({ startSyncWithRetry } = await import('../src/db-sync.js'));
+  });
+
+  after(() => {
+    if (originalDbUrl !== undefined) {
+      process.env.DATABASE_URL = originalDbUrl;
+    }
+  });
+
+  it('should return early (undefined) when DATABASE_URL is not set', async () => {
+    const result = await startSyncWithRetry('/fake/data');
+    assert.equal(result, undefined);
+  });
+});

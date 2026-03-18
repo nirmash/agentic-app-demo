@@ -101,3 +101,18 @@ User: Nir Mashkowski.
 - Fix: Added `ensureAllTables(dataDir)` export to `src/db-sync.js` — scans all `_data/*_spec.json` files and calls `createTables()` for each (idempotent). Called at server startup in `bin/deploy-server.js` when `DATABASE_URL` is set.
 - Convention: any new form spec automatically gets a Postgres table on next deploy/restart — no manual seed or data save required.
 - All 264 tests pass.
+
+### File-to-Postgres Record Sync at Startup (2026-07)
+- The `/db/` page showed empty tables because `ensureAllTables()` only created schema — no mechanism pushed existing `_data/{formName}_{id}.json` records into Postgres at startup.
+- Fix: Added `syncAllRecordsToDb(dataDir)` export to `src/db-sync.js` — scans all non-spec JSON files in `_data/`, reads `_meta.formName` from each, finds the matching spec, and calls `syncToDb()` to upsert. Idempotent; skips files missing `_meta.formName` or a spec.
+- Called in `bin/deploy-server.js` chained after `ensureAllTables()` via `.then()` — tables are guaranteed to exist before records are inserted.
+- Convention: `_meta.formName` is required on every data file — without it, `syncAllRecordsToDb()` silently skips the file (same requirement as `db/seed.js`).
+- All 265 tests pass (1 new test for early-return without `DATABASE_URL`).
+
+### Idempotent DB Sync with Reconnection (2026-07)
+- Verified `syncToDb()` already uses `INSERT ... ON CONFLICT (session_id) DO UPDATE SET` — running sync multiple times never creates duplicates. File data is always source of truth.
+- Added `startSyncWithRetry(dataDir, opts)` to `src/db-sync.js` — wraps `ensureAllTables()` + `syncAllRecordsToDb()` in an exponential-backoff retry loop (default 5 retries, starting at 5s). If Postgres is offline at server start and comes online later, sync still happens.
+- Replaced the one-shot startup chain in `bin/deploy-server.js` with `startSyncWithRetry(DATA_DIR)` — cleaner, resilient, no crash on DB failure.
+- The `/api/save` endpoint already catches sync errors (`.catch()`), so a down DB never crashes the save flow.
+- Convention: all DB writes go through `syncToDb()` which is upsert-based. No plain `INSERT` statements anywhere in the sync path.
+- 260 tests pass (1 pre-existing server.test.js deserialization issue unrelated).

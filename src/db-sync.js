@@ -220,6 +220,40 @@ export function resolveSpecPath(dataDir, formName) {
 }
 
 /**
+ * Run ensureAllTables + syncAllRecordsToDb with retry/backoff.
+ * If the DB is unreachable at startup, retries up to `maxRetries` times
+ * with exponential backoff so a late-starting DB is still picked up.
+ * @param {string} dataDir - path to _data directory
+ * @param {object} [opts]
+ * @param {number} [opts.maxRetries=5]
+ * @param {number} [opts.initialDelayMs=5000]
+ */
+export async function startSyncWithRetry(dataDir, opts = {}) {
+  if (!process.env.DATABASE_URL) return;
+
+  const maxRetries = opts.maxRetries ?? 5;
+  const initialDelayMs = opts.initialDelayMs ?? 5000;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      await ensureAllTables(dataDir);
+      await syncAllRecordsToDb(dataDir);
+      console.log('✅ DB sync completed successfully');
+      return;
+    } catch (err) {
+      const isLastAttempt = attempt === maxRetries;
+      if (isLastAttempt) {
+        console.error(`⚠️  DB sync failed after ${maxRetries + 1} attempts: ${err.message}`);
+        return;
+      }
+      const delayMs = initialDelayMs * Math.pow(2, attempt);
+      console.warn(`⚠️  DB sync attempt ${attempt + 1} failed (${err.message}), retrying in ${delayMs / 1000}s…`);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
+}
+
+/**
  * Drop all tables associated with a form (main + child tables).
  * Reads the spec to find child table names, then drops them all.
  */
