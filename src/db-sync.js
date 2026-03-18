@@ -159,6 +159,29 @@ export async function syncToDb(formName, data, specPath) {
 }
 
 /**
+ * Ensure Postgres tables exist for ALL form specs in a data directory.
+ * Scans for *_spec.json files and creates tables (idempotent).
+ * Call at server startup so every form has a table, even without data.
+ */
+export async function ensureAllTables(dataDir) {
+  if (!process.env.DATABASE_URL) return;
+  if (!fs.existsSync(dataDir)) return;
+
+  const specFiles = fs.readdirSync(dataDir).filter(f => f.endsWith('_spec.json'));
+  for (const file of specFiles) {
+    try {
+      const spec = JSON.parse(fs.readFileSync(path.join(dataDir, file), 'utf-8'));
+      const formName = spec.formName;
+      if (!formName) continue;
+      await createTables(formName, spec);
+      console.log(`  📋 Ensured tables for: ${formName}`);
+    } catch (err) {
+      console.error(`  ⚠️  Table creation failed for ${file}: ${err.message}`);
+    }
+  }
+}
+
+/**
  * Resolve the spec file path for a given formName in the data directory.
  */
 export function resolveSpecPath(dataDir, formName) {

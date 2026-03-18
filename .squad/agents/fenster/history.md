@@ -85,3 +85,19 @@ User: Nir Mashkowski.
 - **Fix:** Changed formula to expression mode: `=first_name + '_' + last_name + '_' + email.split('@')[0]`. Expression mode uses `new Function()` to evaluate arbitrary JS with column values as parameters.
 - Convention: when a calculated column formula needs anything beyond simple `{field_name}` replacement, use expression mode (`=` prefix). Template mode only supports `\w+` field name references.
 - All 264 tests pass (1 pre-existing server.test.js uncaughtException in full suite run, passes individually).
+
+### Index Page Card Grid Layout (2026-07)
+- Redesigned `generateIndexPage()` in `eleventy-builder.js` from a vertical `Box-row` list to a 4-column CSS grid of cards.
+- Each card is a Primer CSS `Box` with rounded corners (`border-radius:8px`), form name, filename label, "Open Form" primary button, and optional "📊 Records" outline button.
+- Used `display: grid; grid-template-columns: repeat(4, 1fr)` with responsive breakpoints: 2 columns at 768px, 1 column at 480px.
+- Container widened from 768px to 960px to accommodate the 4-column grid.
+- Hover effect adds a subtle box-shadow transition for polish.
+- The `node src/cli.js rebuild` command may not pick up freshly edited source due to Node.js ESM module caching — calling `generateIndexPage()` directly via a one-liner node script is more reliable for immediate verification.
+- All 264 tests pass unchanged — the test assertions use `html.includes()` on form names, links, counts, and "Records" text, which the card layout preserves.
+
+### DB Table Creation at Startup (2026-07)
+- The `/db/` page on the deployed Embr app only shows tables that exist in PostgreSQL. Tables were only created as a side effect of `syncToDb()` — called when saving data or seeding. Forms with no data records (e.g., `contacts`) never got tables created.
+- Root cause: `db/seed.js` iterates data files (not spec files), so forms without data are invisible. No startup mechanism ensured all spec-defined tables existed.
+- Fix: Added `ensureAllTables(dataDir)` export to `src/db-sync.js` — scans all `_data/*_spec.json` files and calls `createTables()` for each (idempotent). Called at server startup in `bin/deploy-server.js` when `DATABASE_URL` is set.
+- Convention: any new form spec automatically gets a Postgres table on next deploy/restart — no manual seed or data save required.
+- All 264 tests pass.
