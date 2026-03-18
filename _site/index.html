@@ -7,9 +7,12 @@
   <link rel="stylesheet" href="https://unpkg.com/@primer/css@21.3.1/dist/primer.css">
   <style>
     body { background-color: var(--bgColor-default, #0d1117); color: var(--fgColor-default, #e6edf3); }
-    .container { max-width: 768px; margin: 2rem auto; }
-    .Box-row a { text-decoration: none; padding: 12px 16px; }
-    .Box-row:hover { background: var(--bgColor-muted, #161b22); }
+    .container { max-width: 960px; margin: 2rem auto; padding: 0 1rem; }
+    .card-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    @media (max-width: 768px) { .card-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 480px) { .card-grid { grid-template-columns: 1fr; } }
+    .card-grid > .Box { transition: box-shadow 0.15s ease; }
+    .card-grid > .Box:hover { box-shadow: 0 3px 12px rgba(140,149,159,0.15); }
   </style>
 </head>
 <body>
@@ -18,49 +21,62 @@
       <h1 class="Subhead-heading">📝 adcgen Forms</h1>
       <div class="Subhead-description">5 forms generated</div>
     </div>
-    <div class="Box">
-      <ul class="list-style-none">
-        <li class="Box-row">
-          <a href="/all_controls_test/" class="Link d-flex flex-items-center" style="flex:1">
-            <span class="mr-2">📋</span>
-            <span class="flex-auto">All Controls Test</span>
-            <span class="Label Label--secondary">all_controls_test.html</span>
-          </a>
-            <a href="/all_controls_test_list/" class="Label Label--accent ml-2" style="text-decoration:none;">📊 Records</a>
-        </li>
-        <li class="Box-row">
-          <a href="/attendee/" class="Link d-flex flex-items-center" style="flex:1">
-            <span class="mr-2">📋</span>
-            <span class="flex-auto">Attendee</span>
-            <span class="Label Label--secondary">attendee.html</span>
-          </a>
-            <a href="/attendee_list/" class="Label Label--accent ml-2" style="text-decoration:none;">📊 Records</a>
-        </li>
-        <li class="Box-row">
-          <a href="/contacts/" class="Link d-flex flex-items-center" style="flex:1">
-            <span class="mr-2">📋</span>
-            <span class="flex-auto">Contacts</span>
-            <span class="Label Label--secondary">contacts.html</span>
-          </a>
-            <a href="/contacts_list/" class="Label Label--accent ml-2" style="text-decoration:none;">📊 Records</a>
-        </li>
-        <li class="Box-row">
-          <a href="/session/" class="Link d-flex flex-items-center" style="flex:1">
-            <span class="mr-2">📋</span>
-            <span class="flex-auto">Session</span>
-            <span class="Label Label--secondary">session.html</span>
-          </a>
-            <a href="/session_list/" class="Label Label--accent ml-2" style="text-decoration:none;">📊 Records</a>
-        </li>
-        <li class="Box-row">
-          <a href="/speaker/" class="Link d-flex flex-items-center" style="flex:1">
-            <span class="mr-2">📋</span>
-            <span class="flex-auto">Speaker</span>
-            <span class="Label Label--secondary">speaker.html</span>
-          </a>
-            <a href="/speaker_list/" class="Label Label--accent ml-2" style="text-decoration:none;">📊 Records</a>
-        </li>
-      </ul>
+    <div class="card-grid">
+        <div class="Box p-3 d-flex flex-column" style="border-radius:8px;">
+          <div class="d-flex flex-items-center mb-2">
+            <span class="mr-2" style="font-size:1.4em;">📋</span>
+            <strong class="flex-auto f4">All Controls Test</strong>
+          </div>
+          <span class="Label Label--secondary mb-3">all_controls_test.html</span>
+          <div class="mt-auto">
+            <a href="/all_controls_test/" class="btn btn-sm btn-primary" style="width:100%;text-decoration:none;">Open Form</a>
+          <a href="/all_controls_test_list/" class="btn btn-sm btn-outline mt-2" style="text-decoration:none;width:100%;">📊 Records</a>
+          </div>
+        </div>
+        <div class="Box p-3 d-flex flex-column" style="border-radius:8px;">
+          <div class="d-flex flex-items-center mb-2">
+            <span class="mr-2" style="font-size:1.4em;">📋</span>
+            <strong class="flex-auto f4">Attendee</strong>
+          </div>
+          <span class="Label Label--secondary mb-3">attendee.html</span>
+          <div class="mt-auto">
+            <a href="/attendee/" class="btn btn-sm btn-primary" style="width:100%;text-decoration:none;">Open Form</a>
+          <a href="/attendee_list/" class="btn btn-sm btn-outline mt-2" style="text-decoration:none;width:100%;">📊 Records</a>
+          </div>
+        </div>
+        <div class="Box p-3 d-flex flex-column" style="border-radius:8px;">
+          <div class="d-flex flex-items-center mb-2">
+            <span class="mr-2" style="font-size:1.4em;">📋</span>
+            <strong class="flex-auto f4">Contacts</strong>
+          </div>
+          <span class="Label Label--secondary mb-3">contacts.html</span>
+          <div class="mt-auto">
+            <a href="/contacts/" class="btn btn-sm btn-primary" style="width:100%;text-decoration:none;">Open Form</a>
+          <a href="/contacts_list/" class="btn btn-sm btn-outline mt-2" style="text-decoration:none;width:100%;">📊 Records</a>
+          </div>
+        </div>
+        <div class="Box p-3 d-flex flex-column" style="border-radius:8px;">
+          <div class="d-flex flex-items-center mb-2">
+            <span class="mr-2" style="font-size:1.4em;">📋</span>
+            <strong class="flex-auto f4">Session</strong>
+          </div>
+          <span class="Label Label--secondary mb-3">session.html</span>
+          <div class="mt-auto">
+            <a href="/session/" class="btn btn-sm btn-primary" style="width:100%;text-decoration:none;">Open Form</a>
+          <a href="/session_list/" class="btn btn-sm btn-outline mt-2" style="text-decoration:none;width:100%;">📊 Records</a>
+          </div>
+        </div>
+        <div class="Box p-3 d-flex flex-column" style="border-radius:8px;">
+          <div class="d-flex flex-items-center mb-2">
+            <span class="mr-2" style="font-size:1.4em;">📋</span>
+            <strong class="flex-auto f4">Speaker</strong>
+          </div>
+          <span class="Label Label--secondary mb-3">speaker.html</span>
+          <div class="mt-auto">
+            <a href="/speaker/" class="btn btn-sm btn-primary" style="width:100%;text-decoration:none;">Open Form</a>
+          <a href="/speaker_list/" class="btn btn-sm btn-outline mt-2" style="text-decoration:none;width:100%;">📊 Records</a>
+          </div>
+        </div>
     </div>
   </div>
 </body>

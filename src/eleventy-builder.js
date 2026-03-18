@@ -898,17 +898,20 @@ export function generateIndexPage(siteDir) {
       return { file: name, label, hasListView };
     });
 
-  const links = forms.map(f => {
+  const cards = forms.map(f => {
     const listLink = f.hasListView
-      ? `\n            <a href="/${f.file}_list/" class="Label Label--accent ml-2" style="text-decoration:none;">📊 Records</a>`
+      ? `\n          <a href="/${f.file}_list/" class="btn btn-sm btn-outline mt-2" style="text-decoration:none;width:100%;">📊 Records</a>`
       : '';
-    return `        <li class="Box-row">
-          <a href="/${f.file}/" class="Link d-flex flex-items-center" style="flex:1">
-            <span class="mr-2">📋</span>
-            <span class="flex-auto">${f.label}</span>
-            <span class="Label Label--secondary">${f.file}.html</span>
-          </a>${listLink}
-        </li>`;
+    return `        <div class="Box p-3 d-flex flex-column" style="border-radius:8px;">
+          <div class="d-flex flex-items-center mb-2">
+            <span class="mr-2" style="font-size:1.4em;">📋</span>
+            <strong class="flex-auto f4">${f.label}</strong>
+          </div>
+          <span class="Label Label--secondary mb-3">${f.file}.html</span>
+          <div class="mt-auto">
+            <a href="/${f.file}/" class="btn btn-sm btn-primary" style="width:100%;text-decoration:none;">Open Form</a>${listLink}
+          </div>
+        </div>`;
   }).join('\n');
 
   const html = `<!DOCTYPE html>
@@ -920,9 +923,12 @@ export function generateIndexPage(siteDir) {
   <link rel="stylesheet" href="https://unpkg.com/@primer/css@21.3.1/dist/primer.css">
   <style>
     body { background-color: var(--bgColor-default, #0d1117); color: var(--fgColor-default, #e6edf3); }
-    .container { max-width: 768px; margin: 2rem auto; }
-    .Box-row a { text-decoration: none; padding: 12px 16px; }
-    .Box-row:hover { background: var(--bgColor-muted, #161b22); }
+    .container { max-width: 960px; margin: 2rem auto; padding: 0 1rem; }
+    .card-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    @media (max-width: 768px) { .card-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 480px) { .card-grid { grid-template-columns: 1fr; } }
+    .card-grid > .Box { transition: box-shadow 0.15s ease; }
+    .card-grid > .Box:hover { box-shadow: 0 3px 12px rgba(140,149,159,0.15); }
   </style>
 </head>
 <body>
@@ -931,10 +937,8 @@ export function generateIndexPage(siteDir) {
       <h1 class="Subhead-heading">📝 adcgen Forms</h1>
       <div class="Subhead-description">${forms.length} form${forms.length !== 1 ? 's' : ''} generated</div>
     </div>
-    <div class="Box">
-      <ul class="list-style-none">
-${links}
-      </ul>
+    <div class="card-grid">
+${cards}
     </div>
   </div>
 </body>
