@@ -96,3 +96,64 @@ Added a "list view" page type that generates a read-only HTML table of all saved
 - `src/cli.js` — added `list_view` command, updated `rm` to clean up list files
 
 **Impact on Tests:** All 140 existing tests pass. New functions (`generateListViewHtml`) are exported and available for future testing.
+
+---
+
+### Switch Form Navigation to File-Based API
+
+**Author:** Fenster (Core Dev)  
+**Status:** Implemented
+
+Replaced the DB-based record navigation in generated form HTML with the file-based records API, making prev/next navigation and auto-load work universally (with or without Postgres).
+
+**Key Changes:**
+1. **Navigation endpoints:** Client-side JS now uses `GET /api/records/:formName` (list) and `GET /api/load?formName=X&id=Y` (single record) instead of `/api/db/records/` and `/api/db/record/`.
+2. **Auto-load first record:** Forms now auto-load the first available record on page open. If `?id=` is in the URL, that specific record is selected in the nav.
+3. **List view edit links:** Changed "View" → "✏️ Edit" and column header "Action" → "Edit" for clarity.
+
+**Rationale:** DB endpoints require a running Postgres instance (not always available). File-based API works everywhere since `_data/*.json` files are always present. DB endpoints remain in `deploy-server.js` for direct Postgres access.
+
+**Files Changed:**
+- `src/eleventy-builder.js` — `generateFormHtml()` and `generateListViewHtml()`
+- `test/db-records.test.js`, `test/list-view.test.js`, `test/form-navigation.test.js` — updated assertions
+- All `_site_src/*.html` and `_site/*/index.html` — regenerated
+
+**Impact:** 235 tests pass (1 pre-existing server.test.js deserialization failure unrelated to this change).
+
+---
+
+### Sample Data Deployment Fix
+
+**Author:** Fenster (Core Dev)  
+**Status:** Implemented  
+**Date:** 2025-07-17
+
+Deployed Embr test app had no data due to two root causes: (1) `.gitignore` excluded `_data/*.json` with only `*_spec.json` exception; (2) sample data files lacked `_meta.formName` which `db/seed.js` requires.
+
+**Solution:**
+- Updated `.gitignore` to add exceptions for `speaker_*`, `attendee_*`, and `session_*` data files alongside `*_spec.json` exception.
+- Added `"formName"` to the `_meta` block of all 9 sample data records matching their form name.
+
+**Convention Going Forward:** Any new sample/seed data file must include `_meta.formName` and have a filename pattern that is un-ignored in `.gitignore`. Without both, the data won't reach the deployed app.
+
+**Impact:** All 32 deployed-app integration tests pass. Commit `354c38d` pushed to `main`.
+
+---
+
+### Save Button on Generated Forms
+
+**Author:** Fenster (Core Dev)  
+**Status:** Implemented  
+**Date:** 2026-03-18
+
+Added a "💾 Save" button to all generated forms, placed in the record navigation bar next to "+ New Record".
+
+**Implementation:**
+- **Location:** `src/eleventy-builder.js` — `generateFormHtml()` function
+- **Approach:** Extracted the inline save logic from the form submit handler into a reusable `saveCurrentRecord()` function. Both the form submit event and the new save button call this function.
+- **Behavior:** Save uses the current `SESSION_ID`, so clicking Save on a loaded record updates it in place. Clicking "+ New Record" first generates a new session ID, then Save creates a new record.
+- **Styling:** `btn-success` (green) for Save vs `btn-primary` (blue) for New Record — visually distinct actions.
+
+**Rationale:** Users could submit forms (which saves + navigates) but had no explicit "save current record" action. The Save button makes the save action discoverable and intentional, especially when editing existing records loaded via navigation.
+
+**Impact:** All existing tests pass (231/232 — 1 pre-existing Node.js runner issue in server.test.js). Existing forms need a rebuild (`buildEleventySite()` or `adcgen rebuild`) to pick up the new button.
