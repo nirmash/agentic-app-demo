@@ -116,3 +116,20 @@ User: Nir Mashkowski.
 - The `/api/save` endpoint already catches sync errors (`.catch()`), so a down DB never crashes the save flow.
 - Convention: all DB writes go through `syncToDb()` which is upsert-based. No plain `INSERT` statements anywhere in the sync path.
 - 260 tests pass (1 pre-existing server.test.js deserialization issue unrelated).
+
+### CLI Edit Command — Browser-Side Execution (2026-07)
+- The `adcgen edit` command failed on the deployed Embr app with `Unexpected token 'u', "upstream r"... is not valid JSON` because: (1) the `/db/` page terminal sent `edit` to `/api/cli/exec` (server-side), where `node-fetch` to the Azure AI models endpoint hit Embr's reverse proxy returning "upstream request timeout" instead of JSON; (2) the `edit` command is interactive (uses `prompt()` for change request) which can't work via `execFile`.
+- Fix part 1: Intercepted `adcgen edit` browser-side in the `/db/` page terminal (same pattern as `generate`). Loads spec via `/api/load?formName=X&id=spec`, shows preview, prompts user for change request via pending-input callback, calls LLM from browser, shows updated preview with approve/reject buttons, saves via `/api/cli/save-form`.
+- Fix part 2: Hardened all three LLM functions in `src/generator.js` — reads response as `res.text()` first, then `JSON.parse()` with a descriptive error (`Server returned non-JSON response (HTTP {status}): {body}`) instead of the raw SyntaxError.
+- The `pendingInputCallback` pattern: when an interactive command needs multi-step user input, set a callback that `runCli()` invokes instead of normal command execution on the next Enter press. Reset the callback to `null` after use.
+- Convention: any CLI command that calls the LLM (generate, edit) must be intercepted browser-side on the `/db/` page — Embr's proxy blocks outbound LLM requests from server-side `node-fetch`.
+- 259 tests pass (1 pre-existing server.test.js deserialization issue).
+
+### CLI Commit Command (2026-07)
+- Added `adcgen commit [formName]` command to `src/cli.js` — stages and commits form-related files with a descriptive message, then attempts `git push` (non-fatal on failure).
+- Single-form mode: stages `_data/{formName}_spec.json`, `_data/{formName}_*.json`, `_site_src/{formName}.html`, `_site_src/{formName}_list.html`, and `_site/`. Commits with `"feat: update {formName} form and data"`.
+- All-forms mode (no argument): stages `_data/`, `_site_src/`, `_site/`. Commits with `"feat: update all forms and data"`.
+- Works from the Embr `/db/` terminal automatically — the `/api/cli/exec` endpoint in `deploy-server.js` delegates to `node bin/adcgen.js commit [args]` via `execFile`, so no server-side changes were needed.
+- Uses `execSync` with `cwd: PROJECT_ROOT` so git operations resolve correctly regardless of where the process is invoked from.
+- Convention: non-interactive CLI commands (no `prompt()` calls, no LLM) can run server-side via `/api/cli/exec` without browser-side interception.
+- 264 tests pass (1 pre-existing server.test.js deserialization issue).

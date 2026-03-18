@@ -641,6 +641,94 @@ export function createCli() {
       console.log(`\n  ✅ ${specs.length} form${specs.length !== 1 ? 's' : ''} rebuilt.\n`);
     });
 
+  program
+    .command('commit')
+    .description('Stage and commit form-related files (optionally for a single form)')
+    .argument('[formName]', 'Form name to commit (omit for all forms)')
+    .action(async (formName) => {
+      const fs = (await import('fs')).default;
+      const { execSync } = await import('child_process');
+      const run = (cmd) => execSync(cmd, { cwd: PROJECT_ROOT, encoding: 'utf-8', timeout: 30000 }).trim();
+
+      if (formName) {
+        // Validate form exists
+        const specFile = path.join(PROJECT_ROOT, '_data', `${formName}_spec.json`);
+        if (!fs.existsSync(specFile)) {
+          console.log(`⚠️  Form "${formName}" not found. Run: adcgen list\n`);
+          process.exitCode = 1;
+          return;
+        }
+
+        // Build glob list of files to stage
+        const patterns = [
+          `_data/${formName}_spec.json`,
+          `_data/${formName}_*.json`,
+          `_site_src/${formName}.html`,
+          `_site_src/${formName}_list.html`,
+          '_site/'
+        ];
+
+        // Stage each pattern (ignore errors for missing files)
+        for (const p of patterns) {
+          try { run(`git add ${p}`); } catch { /* file may not exist */ }
+        }
+
+        // Check if anything was staged
+        let staged;
+        try { staged = run('git diff --cached --name-only'); } catch { staged = ''; }
+        if (!staged) {
+          console.log(`\n  ℹ️  No changes to commit for "${formName}".\n`);
+          return;
+        }
+
+        console.log(`\n  📂 Staged files:`);
+        staged.split('\n').forEach(f => console.log(`     • ${f}`));
+
+        try {
+          run(`git commit -m "feat: update ${formName} form and data"`);
+          console.log(`\n  ✅ Committed: feat: update ${formName} form and data\n`);
+        } catch (err) {
+          console.log(`\n  ⚠️  Commit failed: ${err.message}\n`);
+          process.exitCode = 1;
+          return;
+        }
+      } else {
+        // Stage all form-related directories
+        for (const dir of ['_data/', '_site_src/', '_site/']) {
+          try { run(`git add ${dir}`); } catch { /* dir may not exist */ }
+        }
+
+        let staged;
+        try { staged = run('git diff --cached --name-only'); } catch { staged = ''; }
+        if (!staged) {
+          console.log('\n  ℹ️  No changes to commit.\n');
+          return;
+        }
+
+        console.log(`\n  📂 Staged files:`);
+        staged.split('\n').forEach(f => console.log(`     • ${f}`));
+
+        try {
+          run('git commit -m "feat: update all forms and data"');
+          console.log('\n  ✅ Committed: feat: update all forms and data\n');
+        } catch (err) {
+          console.log(`\n  ⚠️  Commit failed: ${err.message}\n`);
+          process.exitCode = 1;
+          return;
+        }
+      }
+
+      // Try push (non-fatal)
+      try {
+        const pushOutput = run('git push');
+        console.log('  🚀 Pushed to remote.');
+        if (pushOutput) console.log(`     ${pushOutput}`);
+      } catch (err) {
+        console.log(`  ⚠️  Push failed (commit is saved locally): ${err.stderr || err.message}`);
+      }
+      console.log('');
+    });
+
   // Show help if no command given
   program.action(() => {
     program.help();
