@@ -82,12 +82,18 @@ export async function generateFormSpec(userPrompt) {
     })
   });
 
+  const rawBody = await res.text();
   if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`LLM API error (${res.status}): ${err}`);
+    throw new Error(`LLM API error (${res.status}): ${rawBody.slice(0, 500)}`);
   }
 
-  const data = await res.json();
+  let data;
+  try {
+    data = JSON.parse(rawBody);
+  } catch (e) {
+    throw new Error(`Server returned non-JSON response (HTTP ${res.status}): ${rawBody.slice(0, 200)}`);
+  }
+
   const content = data.choices?.[0]?.message?.content;
 
   if (!content) {
@@ -183,12 +189,18 @@ export async function editFormSpec(currentSpec, changeRequest, availablePages) {
     })
   });
 
+  const rawBody = await res.text();
   if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`LLM API error (${res.status}): ${err}`);
+    throw new Error(`LLM API error (${res.status}): ${rawBody.slice(0, 500)}`);
   }
 
-  const data = await res.json();
+  let data;
+  try {
+    data = JSON.parse(rawBody);
+  } catch (e) {
+    throw new Error(`Server returned non-JSON response (HTTP ${res.status}): ${rawBody.slice(0, 200)}`);
+  }
+
   const content = data.choices?.[0]?.message?.content;
   if (!content) throw new Error('No response from LLM');
 
@@ -232,12 +244,18 @@ export async function editFormHtml(currentHtml, changeRequest, availablePages) {
     })
   });
 
+  const rawBody = await res.text();
   if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`LLM API error (${res.status}): ${err}`);
+    throw new Error(`LLM API error (${res.status}): ${rawBody.slice(0, 500)}`);
   }
 
-  const data = await res.json();
+  let data;
+  try {
+    data = JSON.parse(rawBody);
+  } catch (e) {
+    throw new Error(`Server returned non-JSON response (HTTP ${res.status}): ${rawBody.slice(0, 200)}`);
+  }
+
   const content = data.choices?.[0]?.message?.content;
   if (!content) throw new Error('No response from LLM');
 

@@ -482,6 +482,141 @@
       cliOutput.scrollTop = cliOutput.scrollHeight;
     }
 
+    const EDIT_SYSTEM_PROMPT = `You are a form design assistant. You are given an existing form specification as JSON and a user's requested change.
+
+Apply the requested change and return the COMPLETE updated JSON specification.
+
+Return ONLY valid JSON (no markdown fences, no explanation). Keep the same schema structure. Preserve all existing fields and settings that are not affected by the change. The form element always has id="main-form" — any handler that submits the form MUST use: document.getElementById('main-form').requestSubmit()
+
+For links to other pages, use type "link" with "href" set to "/<page_name>/" and "label" for the link text.
+DO NOT generate "Add Row" or "Delete Row" buttons or event handlers for tables — the system adds those automatically.
+Table columns can have "required": true. Set "initialRows" to 1 for tables.
+Table columns can have type "calculated" with a "formula" — use {col} placeholders for concatenation or prefix with = for JS expressions (e.g. "=email.split('@')[0]"). Do NOT use events for calculated columns.`;
+
+    // Pending input callback for interactive commands (edit prompt)
+    let pendingInputCallback = null;
+
+    async function handleEdit(args) {
+      const name = args[0];
+      if (!name) {
+        cliOutput.innerHTML += `<span style="color:#f85149;">Usage: adcgen edit &lt;form_name&gt;</span>\n`;
+        return;
+      }
+
+      const formName = name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+      cliOutput.innerHTML += `<span style="color:#8b949e;">Loading form "${formName}"...</span>\n`;
+      cliOutput.scrollTop = cliOutput.scrollHeight;
+
+      // Load spec via the file-based load endpoint (id=spec → reads {formName}_spec.json)
+      let spec;
+      try {
+        const loadRes = await fetch(`/api/load?formName=${encodeURIComponent(formName)}&id=spec`);
+        const loadData = await loadRes.json();
+        if (!loadData.ok || !loadData.data) {
+          cliOutput.innerHTML += `<span style="color:#f85149;">Form "${formName}" not found or has no spec. Only spec-based forms can be edited.</span>\n`;
+          return;
+        }
+        spec = loadData.data;
+      } catch (err) {
+        cliOutput.innerHTML += `<span style="color:#f85149;">Failed to load form: ${escHtml(err.message)}</span>\n`;
+        return;
+      }
+
+      const fieldCount = (spec.sections || []).reduce((n, s) => n + (s.fields || []).length, 0);
+      cliOutput.innerHTML += `<span style="color:#3fb950;">✓ Loaded: "${spec.title || formName}" (${fieldCount} fields)</span>\n`;
+      cliOutput.innerHTML += renderHtmlPreview(spec);
+      cliOutput.innerHTML += `\n<span style="color:#d29922;">✏️  What would you like to change?</span> <span style="color:#8b949e;">(type below and press Enter)</span>\n`;
+      cliOutput.scrollTop = cliOutput.scrollHeight;
+
+      cliInput.value = '';
+      cliInput.placeholder = 'Describe what to change...';
+      cliInput.focus();
+      cliRun.disabled = false;
+
+      // Wait for user input via pending callback
+      pendingInputCallback = async (changeRequest) => {
+        cliInput.placeholder = 'adcgen --help';
+        if (!changeRequest) {
+          cliOutput.innerHTML += `<span style="color:#8b949e;">No changes requested.</span>\n`;
+          cliOutput.scrollTop = cliOutput.scrollHeight;
+          return;
+        }
+
+        cliRun.disabled = true;
+        cliOutput.innerHTML += `<span style="color:#8b949e;">⏳ Applying changes with AI...</span>\n`;
+        cliOutput.scrollTop = cliOutput.scrollHeight;
+
+        const token = await getAuthToken();
+        if (!token) {
+          cliOutput.innerHTML += `<span style="color:#f85149;">Not logged in. Use the login panel above.</span>\n`;
+          cliRun.disabled = false;
+          return;
+        }
+
+        try {
+          const userPrompt = `Current form spec:\n${JSON.stringify(spec, null, 2)}\n\nRequested change:\n${changeRequest}`;
+          const raw = await callLLM(EDIT_SYSTEM_PROMPT, userPrompt, token);
+          const newSpec = JSON.parse(raw);
+          newSpec.formName = formName;
+
+          const newFieldCount = (newSpec.sections || []).reduce((n, s) => n + (s.fields || []).length, 0);
+          cliOutput.innerHTML += `<span style="color:#3fb950;">✓ Updated: "${newSpec.title || formName}" (${newFieldCount} fields)</span>\n`;
+          cliOutput.innerHTML += renderHtmlPreview(newSpec);
+          cliOutput.innerHTML += `\n<span style="color:#d29922;">Apply these changes?</span> `;
+
+          const btnWrap = document.createElement('div');
+          btnWrap.style.display = 'inline';
+          const approveBtn = document.createElement('button');
+          approveBtn.className = 'btn btn-sm btn-primary mr-1';
+          approveBtn.style.pointerEvents = 'auto';
+          approveBtn.innerHTML = '✓ Apply &amp; Save';
+          const rejectBtn = document.createElement('button');
+          rejectBtn.className = 'btn btn-sm btn-danger';
+          rejectBtn.style.pointerEvents = 'auto';
+          rejectBtn.textContent = '✗ Discard';
+
+          approveBtn.onclick = async () => {
+            approveBtn.disabled = true;
+            rejectBtn.disabled = true;
+            cliOutput.innerHTML += `\n<span style="color:#8b949e;">Saving and building...</span>\n`;
+            cliOutput.scrollTop = cliOutput.scrollHeight;
+            try {
+              const saveRes = await fetch('/api/cli/save-form', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ spec: newSpec })
+              });
+              const saveData = await saveRes.json();
+              if (saveData.ok) {
+                cliOutput.innerHTML += `<span style="color:#3fb950;">✓ Form updated: /${formName}/</span>\n`;
+                cliOutput.innerHTML += `<span style="color:#8b949e;">  Open: <a href="/${formName}/" target="_blank" style="color:#58a6ff; pointer-events:auto;">/${formName}/</a></span>\n`;
+              } else {
+                cliOutput.innerHTML += `<span style="color:#f85149;">Save error: ${escHtml(saveData.error)}</span>\n`;
+              }
+            } catch (err) {
+              cliOutput.innerHTML += `<span style="color:#f85149;">❌ ${escHtml(err.message)}</span>\n`;
+            }
+            cliOutput.scrollTop = cliOutput.scrollHeight;
+          };
+          rejectBtn.onclick = () => {
+            approveBtn.disabled = true;
+            rejectBtn.disabled = true;
+            cliOutput.innerHTML += `\n<span style="color:#8b949e;">Changes discarded.</span>\n`;
+            cliOutput.scrollTop = cliOutput.scrollHeight;
+          };
+
+          btnWrap.appendChild(approveBtn);
+          btnWrap.appendChild(rejectBtn);
+          cliOutput.appendChild(btnWrap);
+          cliOutput.appendChild(document.createTextNode('\n'));
+        } catch (err) {
+          cliOutput.innerHTML += `<span style="color:#f85149;">❌ ${escHtml(err.message)}</span>\n`;
+        }
+        cliOutput.scrollTop = cliOutput.scrollHeight;
+        cliRun.disabled = false;
+      };
+    }
+
     const GENERATE_SYSTEM_PROMPT = `You are a form design assistant. Given a user's description of a data entry form, produce a JSON specification.
 
 Return ONLY valid JSON (no markdown fences, no explanation) matching this schema:
@@ -522,6 +657,20 @@ Rules:
     async function runCli() {
       const cmd = cliInput.value.trim();
       if (!cmd) return;
+
+      // If a pending input callback is waiting (e.g., edit change request), route input there
+      if (pendingInputCallback) {
+        const cb = pendingInputCallback;
+        pendingInputCallback = null;
+        cliOutput.innerHTML += `\n<span style="color:#3fb950;">$ ${escHtml(cmd)}</span>\n`;
+        cliInput.value = '';
+        cliRun.disabled = true;
+        await cb(cmd);
+        cliRun.disabled = false;
+        cliOutput.scrollTop = cliOutput.scrollHeight;
+        return;
+      }
+
       cmdHistory.unshift(cmd);
       histIdx = -1;
 
@@ -536,6 +685,11 @@ Rules:
       if ((parts[0] === 'adcgen' || parts[0] === 'adc') && subCmd === 'generate') {
         await handleGenerate(parts.slice(2));
         cliRun.disabled = false;
+        return;
+      }
+
+      if ((parts[0] === 'adcgen' || parts[0] === 'adc') && subCmd === 'edit') {
+        await handleEdit(parts.slice(2));
         return;
       }
 
