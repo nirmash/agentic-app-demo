@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en" data-color-mode="dark" data-dark-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>adcgen CLI</title>
+  <link rel="stylesheet" href="https://unpkg.com/@primer/css@21.3.1/dist/primer.css">
+  <style>
+    html, body { height: 100%; margin: 0; }
+    body { background-color: var(--bgColor-default, #0d1117); color: var(--fgColor-default, #e6edf3); display: flex; flex-direction: column; }
+    .container { max-width: 1200px; width: 100%; margin: 0 auto; padding: 1rem 1.5rem; flex: 1; display: flex; flex-direction: column; }
+    .terminal-box {
+      background: #0d1117;
+      border: 1px solid var(--borderColor-default, #30363d);
+      border-radius: 6px;
+      padding: 1rem;
+      font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+      font-size: 13px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    #cli-output {
+      flex: 1;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      color: var(--fgColor-default, #e6edf3);
+      margin-bottom: 0.75rem;
+      min-height: 200px;
+    }
+    .cli-input-row {
+      display: flex;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+    .cli-input-row input {
+      flex: 1;
+      background: transparent;
+      border: 1px solid var(--borderColor-default, #30363d);
+      border-radius: 4px;
+      color: var(--fgColor-default, #e6edf3);
+      padding: 6px 10px;
+      font-family: inherit;
+      font-size: inherit;
+      outline: none;
+    }
+    .cli-input-row input:focus { border-color: var(--color-accent-fg, #2f81f7); box-shadow: 0 0 0 3px rgba(47,129,247,0.3); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav aria-label="Breadcrumb" class="mb-2">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">Home</a></li>
+        <li class="breadcrumb-item breadcrumb-item-selected"><a href="/cli/">CLI</a></li>
+      </ol>
+    </nav>
+
+    <div class="Subhead mb-2">
+      <h1 class="Subhead-heading">⌨️ adcgen CLI</h1>
+      <div class="Subhead-description">
+        <a href="/" class="Link mr-3">🏠 Home</a>
+        <a href="/db/" class="Link">🗄️ Go to Database</a>
+      </div>
+    </div>
+
+    <!-- Login Panel -->
+    <div id="cli-login-panel" class="Box mb-3 p-3">
+      <div class="d-flex flex-items-center" style="gap: 0.75rem;">
+        <span id="auth-icon" style="font-size: 1.4em;">🔒</span>
+        <div class="flex-auto">
+          <div id="auth-status-text" class="text-bold">Checking authentication...</div>
+          <div id="auth-detail" class="color-fg-muted" style="font-size: 13px;"></div>
+        </div>
+        <div id="auth-actions"></div>
+      </div>
+      <div id="token-input-row" class="d-flex mt-2" style="gap: 0.5rem; display: none !important;">
+        <input id="token-input" type="password" class="form-control input-sm flex-auto" placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" style="font-family: monospace;">
+        <button id="token-submit" class="btn btn-sm btn-primary">Save Token</button>
+        <button id="token-cancel" class="btn btn-sm">Cancel</button>
+      </div>
+    </div>
+
+    <!-- CLI Terminal -->
+    <div id="cli-terminal" style="display: none; flex: 1; min-height: 0;">
+      <div class="terminal-box">
+        <div id="cli-output">
+<span style="color: #8b949e;">Ready. Type a command below (e.g. "adcgen list" or "adcgen --help").</span>
+</div>
+        <div class="cli-input-row">
+          <span style="color: #3fb950; flex-shrink: 0; line-height: 32px;">$</span>
+          <input id="cli-input" type="text" value="adcgen list" spellcheck="false" placeholder="adcgen --help">
+          <button id="cli-run" class="btn btn-sm" style="flex-shrink: 0;">Run</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const cliInput = document.getElementById('cli-input');
+    const cliOutput = document.getElementById('cli-output');
+    const cliRun = document.getElementById('cli-run');
+    const cliTerminal = document.getElementById('cli-terminal');
+    const loginPanel = document.getElementById('cli-login-panel');
+    const authIcon = document.getElementById('auth-icon');
+    const authStatusText = document.getElementById('auth-status-text');
+    const authDetail = document.getElementById('auth-detail');
+    const authActions = document.getElementById('auth-actions');
+    const tokenInputRow = document.getElementById('token-input-row');
+    const tokenInput = document.getElementById('token-input');
+    const tokenSubmit = document.getElementById('token-submit');
+    const tokenCancel = document.getElementById('token-cancel');
+    const cmdHistory = [];
+    let histIdx = -1;
+
+    // Auth flow
+    async function checkAuth() {
+      try {
+        const res = await fetch('/api/cli/auth-status');
+        const data = await res.json();
+        if (data.loggedIn) { showLoggedIn(data.user); }
+        else if (data.ghCliAvailable) { showGhAvailable(); }
+        else { showLoggedOut(); }
+      } catch { showLoggedOut(); }
+    }
+
+    function showLoggedIn(user) {
+      authIcon.textContent = '🔓';
+      authStatusText.textContent = `Logged in as ${user}`;
+      authDetail.textContent = 'CLI commands can access the GitHub API.';
+      authActions.innerHTML = '<button class="btn btn-sm btn-danger" id="logout-btn">Logout</button>';
+      document.getElementById('logout-btn').onclick = doLogout;
+      tokenInputRow.style.display = 'none';
+      cliTerminal.style.display = '';
+    }
+
+    function showGhAvailable() {
+      authIcon.textContent = '🔑';
+      authStatusText.textContent = 'GitHub CLI detected';
+      authDetail.textContent = 'Click "Login with gh CLI" to authenticate, or paste a personal access token.';
+      authActions.innerHTML = `
+        <button class="btn btn-sm btn-primary mr-1" id="gh-login-btn">Login with gh CLI</button>
+        <button class="btn btn-sm" id="manual-login-btn">Paste Token</button>
+      `;
+      document.getElementById('gh-login-btn').onclick = doGhLogin;
+      document.getElementById('manual-login-btn').onclick = showTokenInput;
+      cliTerminal.style.display = 'none';
+    }
+
+    function showLoggedOut() {
+      authIcon.textContent = '🔒';
+      authStatusText.textContent = 'Not logged in';
+      authDetail.textContent = 'Paste a GitHub personal access token to get started.';
+      authActions.innerHTML = '<button class="btn btn-sm btn-primary" id="manual-login-btn">Paste Token</button>';
+      document.getElementById('manual-login-btn').onclick = showTokenInput;
+      cliTerminal.style.display = 'none';
+    }
+
+    function showTokenInput() {
+      tokenInputRow.style.cssText = 'display: flex !important; gap: 0.5rem;';
+      tokenInput.focus();
+    }
+
+    tokenCancel.onclick = () => { tokenInputRow.style.display = 'none'; tokenInput.value = ''; };
+    tokenSubmit.onclick = () => doTokenLogin(tokenInput.value.trim());
+    tokenInput.addEventListener('keydown', e => { if (e.key === 'Enter') doTokenLogin(tokenInput.value.trim()); });
+
+    async function doGhLogin() {
+      authStatusText.textContent = 'Logging in via gh CLI...';
+      try {
+        const res = await fetch('/api/cli/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+        const data = await res.json();
+        if (data.ok) { showLoggedIn(data.user); } else { authDetail.textContent = data.error; showTokenInput(); }
+      } catch (err) { authDetail.textContent = 'Login failed: ' + err.message; }
+    }
+
+    async function doTokenLogin(token) {
+      if (!token) return;
+      tokenSubmit.disabled = true;
+      try {
+        const res = await fetch('/api/cli/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) });
+        const data = await res.json();
+        if (data.ok) { tokenInput.value = ''; tokenInputRow.style.display = 'none'; showLoggedIn(data.user); }
+        else { authDetail.textContent = data.error; }
+      } catch (err) { authDetail.textContent = 'Login failed: ' + err.message; }
+      tokenSubmit.disabled = false;
+    }
+
+    async function doLogout() {
+      await fetch('/api/cli/logout', { method: 'POST' });
+      checkAuth();
+    }
+
+    // LLM config for browser-side calls
+    const LLM_ENDPOINT = 'https://models.inference.ai.azure.com/chat/completions';
+    const LLM_MODEL = 'gpt-4o';
+
+    async function getAuthToken() {
+      const res = await fetch('/api/cli/token');
+      const data = await res.json();
+      return data.ok ? data.token : null;
+    }
+
+    async function callLLM(systemPrompt, userPrompt, token) {
+      const res = await fetch(LLM_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: LLM_MODEL, messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }], temperature: 0.7, max_tokens: 4000 })
+      });
+      if (!res.ok) throw new Error(`LLM API error (${res.status}): ${await res.text()}`);
+      const data = await res.json();
+      const content = data.choices?.[0]?.message?.content;
+      if (!content) throw new Error('No response from LLM');
+      return content.replace(/^```(?:json|html)?\n?/m, '').replace(/\n?```$/m, '').trim();
+    }
+
+    function escHtml(s) {
+      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // Render spec as read-only HTML preview
+    function renderHtmlPreview(spec) {
+      const e = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      let html = `<div style="background:#161b22; border:1px solid #30363d; border-radius:8px; padding:1.5rem; max-width:560px; margin:0.5rem 0; pointer-events:none; opacity:0.95;">`;
+      html += `<h3 style="margin:0 0 0.5rem; color:#e6edf3; border-bottom:1px solid #30363d; padding-bottom:0.5rem;">${e(spec.title)}</h3>`;
+      for (const s of spec.sections || []) {
+        if (s.heading) html += `<h4 style="color:#8b949e; margin:0.75rem 0 0.25rem; font-size:13px; text-transform:uppercase; letter-spacing:0.5px;">${e(s.heading)}</h4>`;
+        for (const f of s.fields || []) {
+          const req = f.required ? ' <span style="color:#f85149;">*</span>' : '';
+          switch (f.type) {
+            case 'text': case 'password':
+              html += `<div style="margin-bottom:0.75rem;"><label style="display:block;color:#e6edf3;font-size:13px;font-weight:600;margin-bottom:4px;">${e(f.label)}${req}</label><input type="${f.type==='password'?'password':'text'}" disabled placeholder="${e(f.placeholder||'')}" style="width:100%;background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:5px 12px;color:#8b949e;font-size:14px;"></div>`;
+              break;
+            case 'dropdown':
+              html += `<div style="margin-bottom:0.75rem;"><label style="display:block;color:#e6edf3;font-size:13px;font-weight:600;margin-bottom:4px;">${e(f.label)}${req}</label><select disabled style="width:100%;background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:5px 12px;color:#8b949e;font-size:14px;appearance:auto;"><option>Select...</option>${(f.options||[]).map(o=>`<option>${e(o)}</option>`).join('')}</select></div>`;
+              break;
+            case 'checkbox':
+              if (f.options?.length) {
+                html += `<div style="margin-bottom:0.75rem;"><label style="display:block;color:#e6edf3;font-size:13px;font-weight:600;margin-bottom:4px;">${e(f.label)}</label>`;
+                f.options.slice(0,5).forEach(o => { html += `<div style="margin-left:4px;color:#8b949e;font-size:13px;"><input type="checkbox" disabled> ${e(o)}</div>`; });
+                html += `</div>`;
+              } else {
+                html += `<div style="margin-bottom:0.75rem;color:#8b949e;font-size:13px;"><input type="checkbox" disabled> ${e(f.label)}</div>`;
+              }
+              break;
+            case 'radio':
+              html += `<div style="margin-bottom:0.75rem;"><label style="display:block;color:#e6edf3;font-size:13px;font-weight:600;margin-bottom:4px;">${e(f.label)}</label>`;
+              (f.options||[]).slice(0,5).forEach(o => { html += `<div style="margin-left:4px;color:#8b949e;font-size:13px;"><input type="radio" disabled> ${e(o)}</div>`; });
+              html += `</div>`;
+              break;
+            case 'button':
+              html += `<div style="margin:0.75rem 0; text-align:center;"><span style="display:inline-block;background:#238636;color:#fff;border-radius:6px;padding:5px 16px;font-size:14px;font-weight:600;">${e(f.label||'Submit')}</span></div>`;
+              break;
+            case 'table': {
+              const cols = f.columns || [];
+              html += `<div style="margin-bottom:0.75rem;"><label style="display:block;color:#e6edf3;font-size:13px;font-weight:600;margin-bottom:4px;">${e(f.label)}</label>`;
+              html += `<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr>`;
+              cols.forEach(c => { html += `<th style="border:1px solid #30363d;padding:4px 8px;background:#0d1117;color:#8b949e;text-align:left;">${e(c.header)}</th>`; });
+              html += `</tr></thead><tbody><tr>`;
+              cols.forEach(c => {
+                const ph = c.type==='checkbox'?'<input type="checkbox" disabled>':c.type==='dropdown'?'<select disabled style="background:#0d1117;border:1px solid #30363d;color:#8b949e;font-size:11px;border-radius:3px;"><option>▼</option></select>':c.type==='calculated'?'<em style="color:#8b949e;">=calc</em>':'<span style="color:#484f58;">___</span>';
+                html += `<td style="border:1px solid #30363d;padding:4px 8px;background:#0d1117;">${ph}</td>`;
+              });
+              html += `</tr></tbody></table></div>`;
+              break;
+            }
+            case 'link':
+              html += `<div style="margin-bottom:0.75rem;"><span style="color:#58a6ff;font-size:13px;">🔗 ${e(f.label)}</span></div>`;
+              break;
+            default:
+              html += `<div style="margin-bottom:0.75rem;"><label style="display:block;color:#e6edf3;font-size:13px;font-weight:600;margin-bottom:4px;">${e(f.label)}${req}</label><input type="text" disabled placeholder="${e(f.placeholder||'')}" style="width:100%;background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:5px 12px;color:#8b949e;font-size:14px;"></div>`;
+          }
+        }
+      }
+      html += `</div>`;
+      return html;
+    }
+
+    // Handle generate command browser-side
+    let pendingSpec = null;
+
+    async function handleGenerate(args) {
+      const name = args[0];
+      const description = args.slice(1).join(' ');
+      if (!name) { cliOutput.innerHTML += `<span style="color:#f85149;">Usage: adcgen generate &lt;form_name&gt; &lt;description&gt;</span>\n`; return; }
+      if (!description) { cliOutput.innerHTML += `<span style="color:#f85149;">Please provide a form description after the name.</span>\n`; return; }
+
+      const formName = name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+      cliOutput.innerHTML += `<span style="color:#8b949e;">⏳ Generating form "${formName}"...</span>\n`;
+      cliOutput.scrollTop = cliOutput.scrollHeight;
+
+      const token = await getAuthToken();
+      if (!token) { cliOutput.innerHTML += `<span style="color:#f85149;">Not logged in. Use the login panel above.</span>\n`; return; }
+
+      try {
+        const raw = await callLLM(GENERATE_SYSTEM_PROMPT, description, token);
+        const spec = JSON.parse(raw);
+        spec.formName = formName;
+
+        const fieldCount = (spec.sections || []).reduce((n, s) => n + (s.fields || []).length, 0);
+        cliOutput.innerHTML += `<span style="color:#3fb950;">✓ Generated: "${spec.title}" (${fieldCount} fields)</span>\n`;
+        cliOutput.innerHTML += renderHtmlPreview(spec);
+        cliOutput.innerHTML += `\n<span style="color:#d29922;">Approve this form?</span> `;
+
+        const btnWrap = document.createElement('div');
+        btnWrap.style.display = 'inline';
+        const approveBtn = document.createElement('button');
+        approveBtn.className = 'btn btn-sm btn-primary mr-1';
+        approveBtn.style.pointerEvents = 'auto';
+        approveBtn.innerHTML = '✓ Approve &amp; Save';
+        const rejectBtn = document.createElement('button');
+        rejectBtn.className = 'btn btn-sm btn-danger';
+        rejectBtn.style.pointerEvents = 'auto';
+        rejectBtn.textContent = '✗ Reject';
+
+        pendingSpec = spec;
+        approveBtn.onclick = () => { approveBtn.disabled = true; rejectBtn.disabled = true; approveForm(); };
+        rejectBtn.onclick = () => { approveBtn.disabled = true; rejectBtn.disabled = true; rejectForm(); };
+
+        btnWrap.appendChild(approveBtn);
+        btnWrap.appendChild(rejectBtn);
+        cliOutput.appendChild(btnWrap);
+        cliOutput.appendChild(document.createTextNode('\n'));
+        cliOutput.scrollTop = cliOutput.scrollHeight;
+      } catch (err) {
+        cliOutput.innerHTML += `<span style="color:#f85149;">❌ ${escHtml(err.message)}</span>\n`;
+      }
+      cliOutput.scrollTop = cliOutput.scrollHeight;
+    }
+
+    async function approveForm() {
+      if (!pendingSpec) return;
+      const spec = pendingSpec;
+      pendingSpec = null;
+
+      cliOutput.innerHTML += `<span style="color:#8b949e;">Saving and building...</span>\n`;
+      cliOutput.scrollTop = cliOutput.scrollHeight;
+
+      try {
+        const saveRes = await fetch('/api/cli/save-form', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ spec })
+        });
+        const saveData = await saveRes.json();
+        if (saveData.ok) {
+          cliOutput.innerHTML += `<span style="color:#3fb950;">✓ Form saved: /${spec.formName}/</span>\n`;
+          cliOutput.innerHTML += `<span style="color:#8b949e;">  Open: <a href="/${spec.formName}/" target="_blank" style="color:#58a6ff; pointer-events:auto;">/${spec.formName}/</a></span>\n`;
+        } else {
+          cliOutput.innerHTML += `<span style="color:#f85149;">Save error: ${escHtml(saveData.error)}</span>\n`;
+        }
+      } catch (err) {
+        cliOutput.innerHTML += `<span style="color:#f85149;">❌ ${escHtml(err.message)}</span>\n`;
+      }
+      cliOutput.scrollTop = cliOutput.scrollHeight;
+    }
+
+    function rejectForm() {
+      pendingSpec = null;
+      cliOutput.innerHTML += `<span style="color:#8b949e;">Form rejected. Run generate again to try a new design.</span>\n`;
+      cliOutput.scrollTop = cliOutput.scrollHeight;
+    }
+
+    const EDIT_SYSTEM_PROMPT = `You are a form design assistant. You are given an existing form specification as JSON and a user's requested change.
+
+Apply the requested change and return the COMPLETE updated JSON specification.
+
+Return ONLY valid JSON (no markdown fences, no explanation). Keep the same schema structure. Preserve all existing fields and settings that are not affected by the change. The form element always has id="main-form" — any handler that submits the form MUST use: document.getElementById('main-form').requestSubmit()
+
+For links to other pages, use type "link" with "href" set to "/<page_name>/" and "label" for the link text.
+DO NOT generate "Add Row" or "Delete Row" buttons or event handlers for tables — the system adds those automatically.
+Table columns can have "required": true. Set "initialRows" to 1 for tables.
+Table columns can have type "calculated" with a "formula" — use {col} placeholders for concatenation or prefix with = for JS expressions (e.g. "=email.split('@')[0]"). Do NOT use events for calculated columns.`;
+
+    let pendingInputCallback = null;
+
+    async function handleEdit(args) {
+      const name = args[0];
+      if (!name) { cliOutput.innerHTML += `<span style="color:#f85149;">Usage: adcgen edit &lt;form_name&gt;</span>\n`; return; }
+
+      const formName = name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+      cliOutput.innerHTML += `<span style="color:#8b949e;">Loading form "${formName}"...</span>\n`;
+      cliOutput.scrollTop = cliOutput.scrollHeight;
+
+      let spec;
+      try {
+        const loadRes = await fetch(`/api/load?formName=${encodeURIComponent(formName)}&id=spec`);
+        const loadData = await loadRes.json();
+        if (!loadData.ok || !loadData.data) {
+          cliOutput.innerHTML += `<span style="color:#f85149;">Form "${formName}" not found or has no spec. Only spec-based forms can be edited.</span>\n`;
+          return;
+        }
+        spec = loadData.data;
+      } catch (err) {
+        cliOutput.innerHTML += `<span style="color:#f85149;">Failed to load form: ${escHtml(err.message)}</span>\n`;
+        return;
+      }
+
+      const fieldCount = (spec.sections || []).reduce((n, s) => n + (s.fields || []).length, 0);
+      cliOutput.innerHTML += `<span style="color:#3fb950;">✓ Loaded: "${spec.title || formName}" (${fieldCount} fields)</span>\n`;
+      cliOutput.innerHTML += renderHtmlPreview(spec);
+      cliOutput.innerHTML += `\n<span style="color:#d29922;">✏️  What would you like to change?</span> <span style="color:#8b949e;">(type below and press Enter)</span>\n`;
+      cliOutput.scrollTop = cliOutput.scrollHeight;
+
+      cliInput.value = '';
+      cliInput.placeholder = 'Describe what to change...';
+      cliInput.focus();
+      cliRun.disabled = false;
+
+      pendingInputCallback = async (changeRequest) => {
+        cliInput.placeholder = 'adcgen --help';
+        if (!changeRequest) {
+          cliOutput.innerHTML += `<span style="color:#8b949e;">No changes requested.</span>\n`;
+          cliOutput.scrollTop = cliOutput.scrollHeight;
+          return;
+        }
+
+        cliRun.disabled = true;
+        cliOutput.innerHTML += `<span style="color:#8b949e;">⏳ Applying changes with AI...</span>\n`;
+        cliOutput.scrollTop = cliOutput.scrollHeight;
+
+        const token = await getAuthToken();
+        if (!token) {
+          cliOutput.innerHTML += `<span style="color:#f85149;">Not logged in. Use the login panel above.</span>\n`;
+          cliRun.disabled = false;
+          return;
+        }
+
+        try {
+          const userPrompt = `Current form spec:\n${JSON.stringify(spec, null, 2)}\n\nRequested change:\n${changeRequest}`;
+          const raw = await callLLM(EDIT_SYSTEM_PROMPT, userPrompt, token);
+          const newSpec = JSON.parse(raw);
+          newSpec.formName = formName;
+
+          const newFieldCount = (newSpec.sections || []).reduce((n, s) => n + (s.fields || []).length, 0);
+          cliOutput.innerHTML += `<span style="color:#3fb950;">✓ Updated: "${newSpec.title || formName}" (${newFieldCount} fields)</span>\n`;
+          cliOutput.innerHTML += renderHtmlPreview(newSpec);
+          cliOutput.innerHTML += `\n<span style="color:#d29922;">Apply these changes?</span> `;
+
+          const btnWrap = document.createElement('div');
+          btnWrap.style.display = 'inline';
+          const approveBtn = document.createElement('button');
+          approveBtn.className = 'btn btn-sm btn-primary mr-1';
+          approveBtn.style.pointerEvents = 'auto';
+          approveBtn.innerHTML = '✓ Apply &amp; Save';
+          const rejectBtn = document.createElement('button');
+          rejectBtn.className = 'btn btn-sm btn-danger';
+          rejectBtn.style.pointerEvents = 'auto';
+          rejectBtn.textContent = '✗ Discard';
+
+          approveBtn.onclick = async () => {
+            approveBtn.disabled = true;
+            rejectBtn.disabled = true;
+            cliOutput.innerHTML += `\n<span style="color:#8b949e;">Saving and building...</span>\n`;
+            cliOutput.scrollTop = cliOutput.scrollHeight;
+            try {
+              const saveRes = await fetch('/api/cli/save-form', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ spec: newSpec })
+              });
+              const saveData = await saveRes.json();
+              if (saveData.ok) {
+                cliOutput.innerHTML += `<span style="color:#3fb950;">✓ Form updated: /${formName}/</span>\n`;
+                cliOutput.innerHTML += `<span style="color:#8b949e;">  Open: <a href="/${formName}/" target="_blank" style="color:#58a6ff; pointer-events:auto;">/${formName}/</a></span>\n`;
+              } else {
+                cliOutput.innerHTML += `<span style="color:#f85149;">Save error: ${escHtml(saveData.error)}</span>\n`;
+              }
+            } catch (err) {
+              cliOutput.innerHTML += `<span style="color:#f85149;">❌ ${escHtml(err.message)}</span>\n`;
+            }
+            cliOutput.scrollTop = cliOutput.scrollHeight;
+          };
+          rejectBtn.onclick = () => {
+            approveBtn.disabled = true;
+            rejectBtn.disabled = true;
+            cliOutput.innerHTML += `\n<span style="color:#8b949e;">Changes discarded.</span>\n`;
+            cliOutput.scrollTop = cliOutput.scrollHeight;
+          };
+
+          btnWrap.appendChild(approveBtn);
+          btnWrap.appendChild(rejectBtn);
+          cliOutput.appendChild(btnWrap);
+          cliOutput.appendChild(document.createTextNode('\n'));
+        } catch (err) {
+          cliOutput.innerHTML += `<span style="color:#f85149;">❌ ${escHtml(err.message)}</span>\n`;
+        }
+        cliOutput.scrollTop = cliOutput.scrollHeight;
+        cliRun.disabled = false;
+      };
+    }
+
+    const GENERATE_SYSTEM_PROMPT = `You are a form design assistant. Given a user's description of a data entry form, produce a JSON specification.
+
+Return ONLY valid JSON (no markdown fences, no explanation) matching this schema:
+
+{
+  "title": "Form Title",
+  "formName": "snake_case_form_name",
+  "sections": [
+    {
+      "heading": "Section Title",
+      "fields": [
+        {
+          "type": "text|password|dropdown|checkbox|radio|table|button|link",
+          "label": "Field Label",
+          "name": "field_name",
+          "placeholder": "optional placeholder",
+          "required": true|false,
+          "options": ["opt1", "opt2"],
+          "href": "/page_name/",
+          "columns": [{ "header": "Col Name", "type": "text|dropdown|checkbox|calculated", "name": "col_name", "options": [], "formula": "{col1} {col2}" }],
+          "initialRows": 1,
+          "events": [{ "event": "click|change|input", "description": "What should happen", "handler": "// JS code" }]
+        }
+      ]
+    }
+  ]
+}
+
+Rules:
+- Use "password" type for secrets. Use "link" type for navigation (href: "/page_name/").
+- "options" is for dropdown/radio only. "columns"/"initialRows" for table only.
+- Use snake_case for all "name" fields. Always include a submit button.
+- IMPORTANT: The form always has id="main-form". Any submit handler MUST use: document.getElementById('main-form').requestSubmit()
+- Do NOT generate "Add Row"/"Delete Row" buttons for tables (system adds those).
+- Set initialRows to 1 for tables. Be creative but practical.`;
+
+    // CLI execution
+    async function runCli() {
+      const cmd = cliInput.value.trim();
+      if (!cmd) return;
+
+      if (pendingInputCallback) {
+        const cb = pendingInputCallback;
+        pendingInputCallback = null;
+        cliOutput.innerHTML += `\n<span style="color:#3fb950;">$ ${escHtml(cmd)}</span>\n`;
+        cliInput.value = '';
+        cliRun.disabled = true;
+        await cb(cmd);
+        cliRun.disabled = false;
+        cliOutput.scrollTop = cliOutput.scrollHeight;
+        return;
+      }
+
+      cmdHistory.unshift(cmd);
+      histIdx = -1;
+
+      cliOutput.innerHTML += `\n<span style="color:#3fb950;">$ ${escHtml(cmd)}</span>\n`;
+      cliInput.value = '';
+      cliRun.disabled = true;
+
+      const parts = cmd.trim().split(/\s+/);
+      const subCmd = parts[1];
+
+      if ((parts[0] === 'adcgen' || parts[0] === 'adc') && subCmd === 'generate') {
+        await handleGenerate(parts.slice(2));
+        cliRun.disabled = false;
+        return;
+      }
+
+      if ((parts[0] === 'adcgen' || parts[0] === 'adc') && subCmd === 'edit') {
+        await handleEdit(parts.slice(2));
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/cli/exec', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ command: cmd })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          cliOutput.innerHTML += escHtml(data.output);
+        } else {
+          cliOutput.innerHTML += `<span style="color:#f85149;">${escHtml(data.error)}</span>`;
+        }
+      } catch (err) {
+        cliOutput.innerHTML += `<span style="color:#f85149;">Error: ${escHtml(err.message)}</span>`;
+      }
+      cliRun.disabled = false;
+      cliOutput.scrollTop = cliOutput.scrollHeight;
+    }
+
+    cliRun.addEventListener('click', runCli);
+    cliInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); runCli(); }
+      if (e.key === 'ArrowUp' && cmdHistory.length > 0) {
+        histIdx = Math.min(histIdx + 1, cmdHistory.length - 1);
+        cliInput.value = cmdHistory[histIdx];
+      }
+      if (e.key === 'ArrowDown') {
+        histIdx = Math.max(histIdx - 1, -1);
+        cliInput.value = histIdx >= 0 ? cmdHistory[histIdx] : '';
+      }
+    });
+
+    checkAuth();
+  </script>
+</body>
+</html>
