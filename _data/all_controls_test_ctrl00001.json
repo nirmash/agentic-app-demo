@@ -1,0 +1,33 @@
+{
+  "full_name": "Alice Johnson",
+  "email": "alice@example.com",
+  "notes": "Testing all field types. This is a textarea value with multiple lines of content for verification.",
+  "secret_code": "s3cret!",
+  "country": "USA",
+  "interests": ["Technology", "Travel"],
+  "agree_terms": true,
+  "contact_method": "Email",
+  "primary_speaker": "abc12345",
+  "attending_sessions": ["stu55555", "vwx66666"],
+  "team_members": [
+    {
+      "first_name": "Bob",
+      "last_name": "Smith",
+      "email": "bob@example.com",
+      "role": "Developer",
+      "active": true
+    },
+    {
+      "first_name": "Carol",
+      "last_name": "Davis",
+      "email": "carol@example.com",
+      "role": "Designer",
+      "active": true
+    }
+  ],
+  "_meta": {
+    "sessionId": "ctrl00001",
+    "submittedAt": "2026-03-18T10:00:00Z",
+    "formName": "all_controls_test"
+  }
+}

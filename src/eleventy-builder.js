@@ -741,6 +741,14 @@ export function generateListViewHtml(spec) {
 </head>
 <body>
   <div class="form-container">
+    <!-- Breadcrumb navigation -->
+    <nav aria-label="Breadcrumb" class="mb-3">
+      <ol class="breadcrumb" style="list-style:none; display:flex; gap:0.25rem; padding:0; margin:0; font-size:14px;">
+        <li class="breadcrumb-item"><a href="/" class="Link">Home</a></li>
+        <li class="breadcrumb-item breadcrumb-item-selected" aria-current="page">${escapeHtml(titleLabel)} Records</li>
+      </ol>
+    </nav>
+
     <div class="form-header">
       <h1 class="h2">${escapeHtml(titleLabel)} Records</h1>
     </div>

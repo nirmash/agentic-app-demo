@@ -8,3 +8,4 @@ _data/*.json
 !_data/speaker_*.json
 !_data/attendee_*.json
 !_data/session_*.json
+!_data/all_controls_test_*.json

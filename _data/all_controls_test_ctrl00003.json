@@ -1,0 +1,40 @@
+{
+  "full_name": "Priya Patel",
+  "email": "priya@example.com",
+  "notes": "Third record exercising the single checkbox, radio, and empty table rows.",
+  "secret_code": "t0p_s3cr3t",
+  "country": "UK",
+  "interests": ["Music", "Technology", "Sports"],
+  "agree_terms": true,
+  "contact_method": "SMS",
+  "primary_speaker": "ghi11111",
+  "attending_sessions": ["stu55555", "vwx66666", "yza77777"],
+  "team_members": [
+    {
+      "first_name": "Frank",
+      "last_name": "Nguyen",
+      "email": "frank.n@example.com",
+      "role": "QA",
+      "active": false
+    },
+    {
+      "first_name": "Grace",
+      "last_name": "Lee",
+      "email": "grace.lee@example.com",
+      "role": "Developer",
+      "active": true
+    },
+    {
+      "first_name": "Hank",
+      "last_name": "Brown",
+      "email": "hank.b@example.com",
+      "role": "Designer",
+      "active": true
+    }
+  ],
+  "_meta": {
+    "sessionId": "ctrl00003",
+    "submittedAt": "2026-03-18T14:15:00Z",
+    "formName": "all_controls_test"
+  }
+}

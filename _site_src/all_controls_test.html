@@ -54,7 +54,7 @@
     <form id="main-form">
 
       <!-- ✅ SAFE TO EDIT: Section headings, text, and links -->
-      <h3 class="h3 mb-3 pb-2 border-bottom">Text &amp; Password Fields</h3>
+      <h3 class="h3 mb-3 pb-2 border-bottom">Text Fields</h3>
       <!-- END SAFE TO EDIT -->
       <!-- ⚠️ DO NOT EDIT: Form fields managed by adcgen. Use "adcgen edit" to change. -->
       <div class="form-group mb-3">
@@ -75,11 +75,19 @@
       </div>
       <div class="form-group mb-3">
         <div class="form-group-header">
-          <label class="FormControl-label" for="password">Password <span class="color-fg-danger">*</span></label>
+          <label class="FormControl-label" for="notes">Notes</label>
+        </div>
+        <div class="form-group-body">
+          <textarea class="form-control input-block" id="notes" name="notes" placeholder="Additional notes or comments" rows="4"></textarea>
+        </div>
+      </div>
+      <div class="form-group mb-3">
+        <div class="form-group-header">
+          <label class="FormControl-label" for="secret_code">Secret Code <span class="color-fg-danger">*</span></label>
         </div>
         <div class="form-group-body position-relative">
-          <input class="form-control input-block" type="password" id="password" name="password" placeholder="Enter password" required>
-          <button type="button" class="btn-octicon position-absolute" style="right:8px;top:50%;transform:translateY(-50%)" onclick="const i=document.getElementById('password');const t=i.type==='password'?'text':'password';i.type=t;this.innerHTML=t==='password'?'👁':'👁‍🗨'" aria-label="Toggle password visibility">👁</button>
+          <input class="form-control input-block" type="password" id="secret_code" name="secret_code" placeholder="Enter secret code" required>
+          <button type="button" class="btn-octicon position-absolute" style="right:8px;top:50%;transform:translateY(-50%)" onclick="const i=document.getElementById('secret_code');const t=i.type==='password'?'text':'password';i.type=t;this.innerHTML=t==='password'?'👁':'👁‍🗨'" aria-label="Toggle password visibility">👁</button>
         </div>
       </div>
       <!-- END DO NOT EDIT -->
@@ -136,7 +144,33 @@
       <!-- END DO NOT EDIT -->
 
       <!-- ✅ SAFE TO EDIT: Section headings, text, and links -->
-      <h3 class="h3 mb-3 pb-2 border-bottom">Table with Mixed Controls</h3>
+      <h3 class="h3 mb-3 pb-2 border-bottom">Lookup Fields</h3>
+      <!-- END SAFE TO EDIT -->
+      <!-- ⚠️ DO NOT EDIT: Form fields managed by adcgen. Use "adcgen edit" to change. -->
+      <div class="form-group mb-3">
+        <div class="form-group-header">
+          <label class="FormControl-label" for="primary_speaker">Primary Speaker <span class="color-fg-danger">*</span></label>
+        </div>
+        <div class="form-group-body">
+          <select class="form-select input-block" id="primary_speaker" name="primary_speaker" required data-lookup-source="speaker" data-lookup-display="full_name" data-lookup-value="sessionId">
+            <option value="">Loading…</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group mb-3">
+        <div class="form-group-header">
+          <label class="FormControl-label" for="attending_sessions">Attending Sessions</label>
+        </div>
+        <div class="form-group-body">
+          <select class="form-select input-block" id="attending_sessions" name="attending_sessions" multiple data-lookup-source="session" data-lookup-display="title" data-lookup-value="sessionId">
+            <option value="">Loading…</option>
+          </select>
+        </div>
+      </div>
+      <!-- END DO NOT EDIT -->
+
+      <!-- ✅ SAFE TO EDIT: Section headings, text, and links -->
+      <h3 class="h3 mb-3 pb-2 border-bottom">Table with Calculated Columns</h3>
       <!-- END SAFE TO EDIT -->
       <!-- ⚠️ DO NOT EDIT: Form fields managed by adcgen. Use "adcgen edit" to change. -->
       <div class="mb-3">
@@ -180,13 +214,16 @@
       <!-- END SAFE TO EDIT -->
       <!-- ⚠️ DO NOT EDIT: Form fields managed by adcgen. Use "adcgen edit" to change. -->
       <div class="mb-3">
-        <a class="Link" href="/login/?new=true">Go to Login Page</a>
+        <a class="Link" href="/speaker/?new=true">Register as Speaker →</a>
+      </div>
+      <div class="mb-3">
+        <a class="Link" href="/attendee/?new=true">View Attendees →</a>
       </div>
       <div class="form-actions mb-3">
-        <button type="button" class="btn" id="validate_btn">Validate</button>
+        <button type="button" class="btn" id="validate_btn">Validate All Fields</button>
       </div>
       <div class="form-actions mb-3">
-        <button type="button" class="btn btn-primary" id="submit_btn">Submit</button>
+        <button type="button" class="btn btn-primary" id="submit_btn">Submit Form</button>
       </div>
       <!-- END DO NOT EDIT -->
 
@@ -595,12 +632,12 @@
     recordSave.addEventListener('click', function() { saveCurrentRecord(); });
 
     // Custom event handlers
-  // Validate: Validate all required fields
+  // Validate All Fields: Validate all required fields
   document.getElementById('validate_btn')?.addEventListener('click', function(e) {
     const form = document.getElementById('main-form'); if (form.checkValidity()) { alert('All fields valid!'); } else { form.reportValidity(); }
   });
 
-  // Submit: Submit the form
+  // Submit Form: Submit the form
   document.getElementById('submit_btn')?.addEventListener('click', function(e) {
     document.getElementById('main-form').requestSubmit();
   });

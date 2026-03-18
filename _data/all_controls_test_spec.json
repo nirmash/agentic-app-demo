@@ -3,7 +3,7 @@
   "formName": "all_controls_test",
   "sections": [
     {
-      "heading": "Text & Password Fields",
+      "heading": "Text Fields",
       "fields": [
         {
           "type": "text",
@@ -20,10 +20,17 @@
           "required": true
         },
         {
+          "type": "textarea",
+          "label": "Notes",
+          "name": "notes",
+          "placeholder": "Additional notes or comments",
+          "rows": 4
+        },
+        {
           "type": "password",
-          "label": "Password",
-          "name": "password",
-          "placeholder": "Enter password",
+          "label": "Secret Code",
+          "name": "secret_code",
+          "placeholder": "Enter secret code",
           "required": true
         }
       ]
@@ -74,7 +81,30 @@
       ]
     },
     {
-      "heading": "Table with Mixed Controls",
+      "heading": "Lookup Fields",
+      "fields": [
+        {
+          "type": "lookup",
+          "label": "Primary Speaker",
+          "name": "primary_speaker",
+          "source": "speaker",
+          "displayField": "full_name",
+          "valueField": "sessionId",
+          "required": true
+        },
+        {
+          "type": "lookup",
+          "label": "Attending Sessions",
+          "name": "attending_sessions",
+          "source": "session",
+          "displayField": "title",
+          "valueField": "sessionId",
+          "multiple": true
+        }
+      ]
+    },
+    {
+      "heading": "Table with Calculated Columns",
       "fields": [
         {
           "type": "table",
@@ -136,13 +166,19 @@
       "fields": [
         {
           "type": "link",
-          "label": "Go to Login Page",
-          "name": "login_link",
-          "href": "/login/"
+          "label": "Register as Speaker →",
+          "name": "speaker_link",
+          "href": "/speaker/"
+        },
+        {
+          "type": "link",
+          "label": "View Attendees →",
+          "name": "attendee_link",
+          "href": "/attendee/"
         },
         {
           "type": "button",
-          "label": "Validate",
+          "label": "Validate All Fields",
           "name": "validate_btn",
           "events": [
             {
@@ -154,7 +190,7 @@
         },
         {
           "type": "button",
-          "label": "Submit",
+          "label": "Submit Form",
           "name": "submit_btn",
           "events": [
             {

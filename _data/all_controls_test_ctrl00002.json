@@ -1,0 +1,26 @@
+{
+  "full_name": "David Kim",
+  "email": "david.kim@example.com",
+  "notes": "Second test record with different selections to verify multi-option controls.",
+  "secret_code": "pa$$w0rd",
+  "country": "Japan",
+  "interests": ["Sports", "Music"],
+  "agree_terms": true,
+  "contact_method": "Phone",
+  "primary_speaker": "def67890",
+  "attending_sessions": ["yza77777"],
+  "team_members": [
+    {
+      "first_name": "Eve",
+      "last_name": "Martinez",
+      "email": "eve@example.com",
+      "role": "Manager",
+      "active": true
+    }
+  ],
+  "_meta": {
+    "sessionId": "ctrl00002",
+    "submittedAt": "2026-03-18T11:30:00Z",
+    "formName": "all_controls_test"
+  }
+}

@@ -32,6 +32,14 @@
 </head>
 <body>
   <div class="form-container">
+    <!-- Breadcrumb navigation -->
+    <nav aria-label="Breadcrumb" class="mb-3">
+      <ol class="breadcrumb" style="list-style:none; display:flex; gap:0.25rem; padding:0; margin:0; font-size:14px;">
+        <li class="breadcrumb-item"><a href="/" class="Link">Home</a></li>
+        <li class="breadcrumb-item breadcrumb-item-selected" aria-current="page">All Controls Test Form Records</li>
+      </ol>
+    </nav>
+
     <div class="form-header">
       <h1 class="h2">All Controls Test Form Records</h1>
     </div>
@@ -44,11 +52,14 @@
           <tr>
             <th class="p-2">Full Name</th>
             <th class="p-2">Email Address</th>
-            <th class="p-2">Password</th>
+            <th class="p-2">Notes</th>
+            <th class="p-2">Secret Code</th>
             <th class="p-2">Country</th>
             <th class="p-2">Interests</th>
             <th class="p-2">Agree to Terms</th>
             <th class="p-2">Preferred Contact Method</th>
+            <th class="p-2">Primary Speaker</th>
+            <th class="p-2">Attending Sessions</th>
             <th class="p-2" style="width:70px">Edit</th>
           </tr>
         </thead>
@@ -66,7 +77,7 @@
 
   <script>
     const FORM_NAME = 'all_controls_test';
-    const COLUMNS = ["full_name","email","password","country","interests","agree_terms","contact_method"];
+    const COLUMNS = ["full_name","email","notes","secret_code","country","interests","agree_terms","contact_method","primary_speaker","attending_sessions"];
     const API_BASE = (location.port === '3001' || location.port === '80' || location.port === '443' || location.port === '')
       ? '' : 'http://localhost:3001';
 
