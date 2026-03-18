@@ -8,7 +8,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { v4 as uuidv4 } from 'uuid';
 import { execFile, execFileSync } from 'child_process';
-import { syncToDb, resolveSpecPath, ensureAllTables } from '../src/db-sync.js';
+import { syncToDb, resolveSpecPath, ensureAllTables, syncAllRecordsToDb } from '../src/db-sync.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -307,11 +307,13 @@ app.post('/api/cli/exec', (req, res) => {
 // Static files
 app.use(express.static(SITE_DIR));
 
-// Ensure all form tables exist at startup (idempotent)
+// Ensure all form tables exist at startup, then sync file-based records
 if (process.env.DATABASE_URL) {
-  ensureAllTables(DATA_DIR).catch(err =>
-    console.error('⚠️  Startup table sync failed:', err.message)
-  );
+  ensureAllTables(DATA_DIR)
+    .then(() => syncAllRecordsToDb(DATA_DIR))
+    .catch(err =>
+      console.error('⚠️  Startup DB sync failed:', err.message)
+    );
 }
 
 app.listen(PORT, '0.0.0.0', () => {

@@ -182,6 +182,37 @@ export async function ensureAllTables(dataDir) {
 }
 
 /**
+ * Sync ALL file-based records to Postgres.
+ * Scans dataDir for {formName}_{id}.json files, upserts each into its table.
+ * Idempotent — safe to run on every startup.
+ */
+export async function syncAllRecordsToDb(dataDir) {
+  if (!process.env.DATABASE_URL) return;
+  if (!fs.existsSync(dataDir)) return;
+
+  const files = fs.readdirSync(dataDir)
+    .filter(f => f.endsWith('.json') && !f.endsWith('_spec.json'));
+
+  let synced = 0;
+  for (const file of files) {
+    try {
+      const data = JSON.parse(fs.readFileSync(path.join(dataDir, file), 'utf-8'));
+      const formName = data._meta?.formName;
+      if (!formName) continue;
+
+      const specPath = path.join(dataDir, `${formName}_spec.json`);
+      if (!fs.existsSync(specPath)) continue;
+
+      await syncToDb(formName, data, specPath);
+      synced++;
+    } catch (err) {
+      console.error(`  ⚠️  Record sync failed for ${file}: ${err.message}`);
+    }
+  }
+  console.log(`  🔄 Synced ${synced} record(s) to Postgres`);
+}
+
+/**
  * Resolve the spec file path for a given formName in the data directory.
  */
 export function resolveSpecPath(dataDir, formName) {
