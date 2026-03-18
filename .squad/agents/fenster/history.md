@@ -58,3 +58,12 @@ User: Nir Mashkowski.
 - The `adcgen rebuild` command (`node bin/adcgen.js rebuild`) reads all `_data/*_spec.json` files and calls `buildEleventySite(spec, projectRoot)` for each, regenerating both form and list view HTML.
 - After rebuild, must run `npm run build` (Eleventy) to propagate changes from `_site_src/` → `_site/`.
 - Pattern: any change to the HTML generator should be followed by `adcgen rebuild && npm run build` to keep deployed forms in sync.
+
+### Form System Features Batch (2026-03-18)
+- **Lookup dropdown (foreign key):** New `lookup` field type in `generateFieldHtml()`. Renders a `<select>` with `data-lookup-source`, `data-lookup-display`, `data-lookup-value` attributes. Client-side JS fetches `/api/records/{source}` on page load and populates options dynamically. Supports `multiple` for multi-select.
+- **Links open new record:** Link fields now append `?new=true` to their href. The form JS reads `urlParams.get('new')` and when `'true'`, skips auto-loading the first record in `fetchRecordsList()`.
+- **Home button:** Added `🏠 Home` link (`<a href="/">`) in the record navigation bar, before the Prev button. Uses `btn btn-sm` styling.
+- **Breadcrumbs:** Added `<nav aria-label="Breadcrumb">` with Primer CSS `breadcrumb` classes above the form header. Format: `Home > {Form Title}`. Home links to `/`.
+- Updated session spec to replace static `speaker_name` text field with a `lookup` field referencing the `speaker` form.
+- `populateForm()` updated to handle multi-select lookups (arrays of string values → set selected options).
+- All 264 tests pass. Existing link test assertions updated to expect `?new=true` suffix.
