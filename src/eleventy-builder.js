@@ -919,7 +919,7 @@ export function generateIndexPage(siteDir) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>adcgen — Forms</title>
+  <title>Home</title>
   <link rel="stylesheet" href="https://unpkg.com/@primer/css@21.3.1/dist/primer.css">
   <style>
     body { background-color: var(--bgColor-default, #0d1117); color: var(--fgColor-default, #e6edf3); }
@@ -934,7 +934,7 @@ export function generateIndexPage(siteDir) {
 <body>
   <div class="container">
     <div class="Subhead mb-4">
-      <h1 class="Subhead-heading">📝 adcgen Forms</h1>
+      <h1 class="Subhead-heading">📝 Home</h1>
       <div class="Subhead-description">${forms.length} form${forms.length !== 1 ? 's' : ''} generated</div>
     </div>
     <div class="card-grid">
